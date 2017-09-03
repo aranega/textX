@@ -10,6 +10,7 @@ import sys
 import codecs
 import traceback
 from arpeggio import Parser, Sequence, NoMatch, EOF, Terminal
+from pyecore.ecore import EReference, EClass
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, MULT_ZEROORMORE, \
     RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
@@ -148,6 +149,8 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             # { id(class): { obj.name: obj}}
             self._instances = {}
 
+            self.crossrefs = []
+
         def _parse(self):
             try:
                 return self.parser_model.parse(self)
@@ -266,17 +269,18 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 # Object initialization will be done afterwards
                 # At this point we need object to be allocated
                 # So that nested object get correct reference
-                inst = user_class.__new__(user_class)
+                # inst = user_class.__new__(user_class)
+                inst = user_class()
 
                 # Initialize object attributes for user class
-                parser.metamodel._init_obj_attrs(inst, user=True)
+                # parser.metamodel._init_obj_attrs(inst, user=True)
             else:
                 # Generic class will call attributes init
                 # from the constructor
-                inst = mclass.__new__(mclass)
-
+                    #inst = mclass.__new__(mclass)
+                inst = mclass()
                 # Initialize object attributes
-                parser.metamodel._init_obj_attrs(inst)
+                #parser.metamodel._init_obj_attrs(inst)
 
             # Collect attributes directly on meta-class instance
             obj_attrs = inst
@@ -304,26 +308,26 @@ def parse_tree_to_objgraph(parser, parse_tree):
 
             # If the class is user supplied we need to do
             # a proper initialization at this point.
-            if node.rule_name in metamodel.user_classes:
-                try:
-                    # Get only attributes defined by the grammar as well
-                    # as `parent` if exists
-                    attrs = {}
-                    if hasattr(obj_attrs, '_txa_parent'):
-                        attrs['parent'] = obj_attrs._txa_parent
-                        del obj_attrs._txa_parent
-                    for a in obj_attrs.__class__._tx_attrs:
-                        attrs[a] = getattr(obj_attrs, "_txa_%s" % a)
-                        delattr(obj_attrs, "_txa_%s" % a)
-                    inst.__init__(**attrs)
-                except TypeError as e:
-                    # Add class name information in case of
-                    # wrong constructor parameters
-                    # print("Constructor params: {}".format(text(obj_attrs.__dict__)))
-                    e.args += ("for class %s" %
-                               inst.__class__.__name__,)
-                    parser.dprint(traceback.print_exc())
-                    raise e
+            # if node.rule_name in metamodel.user_classes:
+            #     try:
+            #         # Get only attributes defined by the grammar as well
+            #         # as `parent` if exists
+            #         attrs = {}
+            #         # if hasattr(obj_attrs, '_txa_parent'):
+            #         #     attrs['parent'] = obj_attrs._txa_parent
+            #         #     del obj_attrs._txa_parent
+            #         # for a in obj_attrs.__class__._tx_attrs:
+            #         #     attrs[a] = getattr(obj_attrs, "_txa_%s" % a)
+            #         #     delattr(obj_attrs, "_txa_%s" % a)
+            #         inst.__init__(**attrs)
+            #     except TypeError as e:
+            #         # Add class name information in case of
+            #         # wrong constructor parameters
+            #         # print("Constructor params: {}".format(text(obj_attrs.__dict__)))
+            #         e.args += ("for class %s" %
+            #                    inst.__class__.__name__,)
+            #         parser.dprint(traceback.print_exc())
+            #         raise e
 
             # Special case for 'name' attrib. It is used for cross-referencing
             if hasattr(inst, 'name') and inst.name:
@@ -346,7 +350,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
             # Mangle attribute name to prevent name clashing with property
             # setters on user classes
             if cls.__name__ in metamodel.user_classes:
-                txa_attr_name = "_txa_%s" % attr_name
+                # txa_attr_name = "_txa_%s" % attr_name
+                txa_attr_name = attr_name
             else:
                 txa_attr_name = attr_name
 
@@ -372,6 +377,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     # If this is non-containing reference create ObjCrossRef
                     value = ObjCrossRef(obj_name=value, cls=metaattr.cls,
                                         position=node[0].position)
+                    parser.crossrefs.append((model_obj, metaattr, value))
+                    return model_obj
 
                 if type(attr_value) is list:
                     attr_value.append(value)
@@ -434,6 +441,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                         if result:
                             return result
                 elif cls._tx_type == RULE_COMMON:
+                    cls = cls.python_class if isinstance(cls, EClass) else cls
                     if id(cls) in parser._instances:
                         objs = parser._instances[id(cls)]
                         if obj_name in objs:
@@ -457,37 +465,66 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 line=line, col=col)
 
         def _resolve_obj_attributes(o):
-            if parser.debug:
-                parser.dprint("RESOLVING CLASS: {}"
-                              .format(o.__class__.__name__))
-            if o in resolved_set:
-                return
-            resolved_set.add(o)
+            # if parser.debug:
+            #     parser.dprint("RESOLVING CLASS: {}"
+            #                   .format(o.__class__.__name__))
+            # if o in resolved_set:
+            #     return
+            # resolved_set.add(o)
 
             # If this object has attributes (created using a common rule)
-            if hasattr(o.__class__, "_tx_attrs"):
-                for attr in o.__class__._tx_attrs.values():
-                    if parser.debug:
-                        parser.dprint("RESOLVING ATTR: {}".format(attr.name))
-                        parser.dprint("mult={}, ref={}, con={}".format(
-                                      attr.mult,
-                                      attr.ref, attr.cont))
-                    attr_value = getattr(o, attr.name)
-                    if attr.mult in [MULT_ONEORMORE, MULT_ZEROORMORE]:
-                        for idx, list_attr_value in enumerate(attr_value):
-                            if attr.ref:
-                                if attr.cont:
-                                    _resolve_obj_attributes(list_attr_value)
-                                else:
-                                    attr_value[idx] = \
-                                        _resolve_link_rule_ref(list_attr_value)
-                    else:
-                        if attr.ref:
-                            if attr.cont:
-                                _resolve_obj_attributes(attr_value)
-                            else:
-                                setattr(o, attr.name,
-                                        _resolve_link_rule_ref(attr_value))
+            for obj, attr, crossref in parser.crossrefs:
+                attr_value = getattr(obj, attr.name)
+                if attr.mult in [MULT_ONEORMORE, MULT_ZEROORMORE]:
+                    attr_value.append(_resolve_link_rule_ref(crossref))
+                else:
+                    setattr(obj, attr.name, _resolve_link_rule_ref(crossref))
+
+            # version #2
+            # for attr in o.eClass.eAllStructuralFeatures():
+            #     attr_value = getattr(o, attr.name)
+            #     if not isinstance(attr, EReference):
+            #         continue
+            #     if attr.many:
+            #         for idx, list_attr_value in enumerate(attr_value):
+            #             if attr.containment:
+            #                 _resolve_obj_attributes(list_attr_value)
+            #             else:
+            #                 attr_value[idx] = \
+            #                     _resolve_link_rule_ref(list_attr_value)
+            #     else:
+            #         if attr.containment:
+            #             _resolve_obj_attributes(attr_value)
+            #         else:
+            #             res = _resolve_link_rule_ref(attr_value)
+            #             setattr(o, attr.name, res)
+
+
+            # if hasattr(o.__class__, "_tx_attrs"):
+            #     for attr in o.__class__._tx_attrs.values():
+            #         if parser.debug:
+            #             parser.dprint("RESOLVING ATTR: {}".format(attr.name))
+            #             parser.dprint("mult={}, ref={}, con={}".format(
+            #                           attr.mult,
+            #                           attr.ref, attr.cont))
+            #         attr_value = getattr(o, attr.name)
+            #         if attr.mult in [MULT_ONEORMORE, MULT_ZEROORMORE]:
+            #             for idx, list_attr_value in enumerate(attr_value):
+            #                 if attr.ref:
+            #                     if attr.cont:
+            #                         _resolve_obj_attributes(list_attr_value)
+            #                     else:
+            #                         resolved_element = \
+            #                             _resolve_link_rule_ref(list_attr_value)
+            #                         attr_value.pop(idx)
+            #                         attr_value.insert(idx, resolved_element)
+            #         else:
+            #             if attr.ref:
+            #                 if attr.cont:
+            #                     _resolve_obj_attributes(attr_value)
+            #                 else:
+            #                     res = _resolve_link_rule_ref(attr_value)
+            #                     setattr(o, attr.name, res)
 
         _resolve_obj_attributes(model)
 

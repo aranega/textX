@@ -17,7 +17,7 @@ from arpeggio import StrMatch, Optional, ZeroOrMore, OneOrMore, Sequence,\
     ParsingExpression, ParserPython, PTNodeVisitor, visit_parse_tree
 from arpeggio.export import PMDOTExporter
 from arpeggio import RegExMatch as _
-
+from pyecore.ecore import EAttribute, EReference
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, \
     MULT_OPTIONAL, RULE_COMMON, RULE_MATCH, RULE_ABSTRACT, mult_lt
@@ -304,7 +304,7 @@ class TextXVisitor(PTNodeVisitor):
             # Abstract are root rules which haven't got any attributes
             # and reference at least one non-match rule.
             abstract = False
-            if rule.rule_name and cls.__name__ != rule.rule_name:
+            if rule.rule_name and cls.name != rule.rule_name:
                 # Special case. Body of the rule is a single rule
                 # reference and the referenced rule is not match rule.
                 target_cls = metamodel[rule.rule_name]
@@ -385,13 +385,27 @@ class TextXVisitor(PTNodeVisitor):
 
                     # If target cls is of a base type or match rule
                     # then attr can not be a reference.
-                    if attr.cls.__name__ in BASE_TYPE_NAMES \
+                    if attr.cls.name in BASE_TYPE_NAMES \
                             or attr.cls._tx_type == RULE_MATCH:
                         attr.ref = False
                         attr.cont = True
                     else:
                         attr.ref = True
 
+                    if attr.mult == MULT_ONE:
+                        lower, upper = 1, 1
+                    elif attr.mult == MULT_ONEORMORE:
+                        lower, upper = 1, -1
+                    else:
+                        lower, upper = 0, -1
+                    feature_cls = EReference if attr.ref else EAttribute
+                    feature = feature_cls(attr.name, attr.cls,
+                                          lower=lower, upper=upper)
+                    if attr.cont:
+                        feature.containment = True
+                    feature.position = attr.position
+                    if cls.findEStructuralFeature(attr.name) is None:
+                        cls.eStructuralFeatures.append(feature)
                     if grammar_parser.debug:
                         grammar_parser.dprint(
                             "Resolved attribute {}:{}[cls={}, cont={}, "
