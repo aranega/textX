@@ -25,13 +25,14 @@ Direction:
 ;
 
 Comment:
-  text=/\/\/.*$/
+  /\/\/.*$/
 ;
 """
 
 mm = metamodel_from_str(grammar)
 
 program = mm.model_from_str("""
+// test
 begin
     initial 3, 1
     up 4

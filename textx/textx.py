@@ -398,11 +398,14 @@ class TextXVisitor(PTNodeVisitor):
                         lower, upper = 1, 1
                     elif attr.mult == MULT_ONEORMORE:
                         lower, upper = 1, -1
+                    elif attr.mult == MULT_OPTIONAL:
+                        lower, upper = 0, 1
                     else:
                         lower, upper = 0, -1
                     feature_cls = EReference if attr.ref else EAttribute
-                    feature = feature_cls(attr.name, attr.cls,
-                                          lower=lower, upper=upper)
+                    etype = EBoolean if attr.bool_assignment else attr.cls
+                    feature = feature_cls(attr.name, etype, lower=lower,
+                                          upper=upper)
                     if attr.cont:
                         feature.containment = True
                     feature.position = attr.position
