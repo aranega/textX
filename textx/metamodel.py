@@ -152,25 +152,25 @@ class TextXMetaModel(DebugPrinter):
         self._enter_namespace('__base__')
 
         # Base types hierarchy should exist in each meta-model
-        base_id = self._new_class('ID', ID, 0, datatype=True, eType=str)
-        base_string = self._new_class('STRING', STRING, 0, datatype=True,
+        base_id = self._new_class('ID', ID, 0, kind=EDataType, eType=str)
+        base_string = self._new_class('STRING', STRING, 0, kind=EDataType,
                                       eType=str)
-        base_bool = self._new_class('BOOL', BOOL, 0, datatype=True,
+        base_bool = self._new_class('BOOL', BOOL, 0, kind=EDataType,
                                     eType=bool)
-        base_int = self._new_class('INT', INT, 0, datatype=True,
+        base_int = self._new_class('INT', INT, 0, kind=EDataType,
                                    eType=int)
-        base_float = self._new_class('FLOAT', FLOAT, 0, datatype=True,
+        base_float = self._new_class('FLOAT', FLOAT, 0, kind=EDataType,
                                      eType=float)
         base_number = self._new_class('NUMBER', NUMBER, 0,
                                       inherits=[base_float, base_int],
-                                      datatype=True,
+                                      kind=EDataType,
                                       eType=int)
         base_type = self._new_class('BASETYPE', BASETYPE, 0,
                                     inherits=[base_number, base_bool, base_id,
-                                              base_string], datatype=True,
+                                              base_string], kind=EDataType,
                                     eType=str)
         self._new_class('OBJECT', OBJECT, 0, inherits=[base_type],
-                        rule_type=RULE_ABSTRACT, datatype=True,
+                        rule_type=RULE_ABSTRACT, kind=EDataType,
                         eType=object)
 
         # Resolve file name to absolute path.
@@ -253,7 +253,7 @@ class TextXMetaModel(DebugPrinter):
 
     def _new_class(self, name, peg_rule, position, position_end=None,
                    inherits=None, root=False, rule_type=RULE_MATCH,
-                   datatype=False, eType=None):
+                   kind=EClass, eType=None):
         """
         Creates a new class with the given name in the current namespace.
         Args:
@@ -295,7 +295,7 @@ class TextXMetaModel(DebugPrinter):
                     return "<textx:{} object at {}>"\
                         .format(name, hex(id(self)))
 
-        cls = EDataType(name, eType=eType) if datatype else EClass(name)
+        cls = kind(name, eType=eType) if eType else kind(name)
 
         self._init_class(cls, peg_rule, position, position_end, inherits, root,
                          rule_type)

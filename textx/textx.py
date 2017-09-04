@@ -17,7 +17,7 @@ from arpeggio import StrMatch, Optional, ZeroOrMore, OneOrMore, Sequence,\
     ParsingExpression, ParserPython, PTNodeVisitor, visit_parse_tree
 from arpeggio.export import PMDOTExporter
 from arpeggio import RegExMatch as _
-from pyecore.ecore import EAttribute, EReference
+from pyecore.ecore import *
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, \
     MULT_OPTIONAL, RULE_COMMON, RULE_MATCH, RULE_ABSTRACT, mult_lt
@@ -327,6 +327,7 @@ class TextXVisitor(PTNodeVisitor):
 
             if abstract:
                 cls._tx_type = RULE_ABSTRACT
+                cls.abstract = True
                 # Add inherited classes to this rule's meta-class
                 if rule.rule_name and cls.__name__ != rule.rule_name:
                     if rule._tx_class not in cls._tx_inh_by:
@@ -341,6 +342,7 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
+                                        r._tx_class.eSuperTypes.append(cls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
@@ -582,9 +584,22 @@ class TextXVisitor(PTNodeVisitor):
         return RuleCrossRef(rule_name, rule_name, node.position)
 
     def visit_textx_rule_body(self, node, children):
+        if self.node_is_enumeration(children):
+            current_cls = self._current_cls
+            cls = self.metamodel._new_class(current_cls.name, None,
+                                            current_cls._tx_position,
+                                            kind=EEnum)
+            self._current_cls = cls
+            for i, literal in enumerate(children):
+                cls.eLiterals.append(EEnumLiteral(i, str(literal)))
         if len(children) == 1:
             return children[0]
         return OrderedChoice(nodes=children[:])
+
+    def node_is_enumeration(self, children):
+        """Tries to determine if a node is actually an enumeration.
+        """
+        return all(type(x) is StrMatch for x in children)
 
     def visit_sequence(self, node, children):
         if len(children) == 1:
