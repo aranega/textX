@@ -1,4 +1,5 @@
 from textx.metamodel import metamodel_from_str
+from textx.export import metamodel_export
 from pyecore.ecore import *
 
 grammar = """
@@ -30,6 +31,8 @@ Comment:
 """
 
 mm = metamodel_from_str(grammar)
+
+metamodel_export(mm, 'test.dot')
 
 program = mm.model_from_str("""
 // test

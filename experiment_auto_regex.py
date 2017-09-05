@@ -1,5 +1,6 @@
 from textx.metamodel import metamodel_from_str
 from pyecore.ecore import *
+from textx.export import metamodel_export
 
 grammar = """
 Move:
@@ -20,7 +21,7 @@ AB:
 
 mm = metamodel_from_str(grammar)
 
-print()
+metamodel_export(mm, 'test.dot')
 
 program = mm.model_from_str("""
 widget 44

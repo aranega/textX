@@ -66,9 +66,9 @@ def match_abstract_str(cls):
         return "{}{}".format(result, "-" if s.suppress else "")
 
     mstr = ""
-    if cls.__name__ not in ALL_TYPE_NAMES and \
+    if cls.name not in ALL_TYPE_NAMES and \
             not (cls._tx_type is RULE_ABSTRACT and
-                 cls.__name__ != cls._tx_peg_rule.rule_name):
+                 cls.name != cls._tx_peg_rule.rule_name):
         e = cls._tx_peg_rule
         visited = set()
         if not isinstance(e, Match):
@@ -111,7 +111,7 @@ def metamodel_export(metamodel, file_name):
         f.write(HEADER)
 
         for cls in metamodel:
-            name = cls.__name__
+            name = cls.name
             attrs = ""
             if cls._tx_type is not RULE_COMMON:
                 attrs = match_abstract_str(cls)
@@ -122,9 +122,9 @@ def metamodel_export(metamodel, file_name):
                     mult_list = attr.mult in [MULT_ZEROORMORE, MULT_ONEORMORE]
                     required = "+" if attr.mult in \
                         [MULT_ONE, MULT_ONEORMORE] else ""
-                    attr_type = "list[{}]".format(attr.cls.__name__) \
-                        if mult_list else attr.cls.__name__
-                    if attr.ref and attr.cls.__name__ != 'OBJECT':
+                    attr_type = "list[{}]".format(attr.cls.name) \
+                        if mult_list else attr.cls.name
+                    if attr.ref and attr.cls.name != 'OBJECT':
                         # If attribute is a reference
                         mult = attr.mult if not attr.mult == MULT_ONE else ""
                         f.write('{} -> {}[{}headlabel="{} {}"]\n'
