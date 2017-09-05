@@ -14,7 +14,8 @@ from __future__ import unicode_literals
 import re
 from arpeggio import StrMatch, Optional, ZeroOrMore, OneOrMore, Sequence,\
     OrderedChoice, UnorderedGroup, Not, And, RegExMatch, Match, NoMatch, EOF, \
-    ParsingExpression, ParserPython, PTNodeVisitor, visit_parse_tree
+    ParsingExpression, ParserPython, PTNodeVisitor, visit_parse_tree, \
+    Repetition
 from arpeggio.export import PMDOTExporter
 from arpeggio import RegExMatch as _
 from pyecore.ecore import *
@@ -587,7 +588,7 @@ class TextXVisitor(PTNodeVisitor):
         return RuleCrossRef(rule_name, rule_name, node.position)
 
     def visit_textx_rule_body(self, node, children):
-        if self.rule_defines_enumeration(children):
+        if self.rule_is_enumeration(children):
             current_cls = self._current_cls
             cls = self.metamodel._new_class(current_cls.name, None,
                                             current_cls._tx_position,
@@ -595,7 +596,7 @@ class TextXVisitor(PTNodeVisitor):
             self._current_cls = cls
             for i, literal in enumerate(children):
                 cls.eLiterals.append(EEnumLiteral(i, str(literal)))
-        elif self.rule_defines_datatype(children):
+        elif self.current_is_datatype():
             current_cls = self._current_cls
             cls = self.metamodel._new_class(current_cls.name, None,
                                             current_cls._tx_position,
@@ -606,21 +607,21 @@ class TextXVisitor(PTNodeVisitor):
             return children[0]
         return OrderedChoice(nodes=children[:])
 
-    def rule_defines_enumeration(self, children):
+    def rule_is_enumeration(self, children):
         """Tries to determine if a node is actually an EEnum.
         """
         return all(type(x) is StrMatch for x in children)
 
-    def rule_defines_datatype(self, children):
-        """Tries to determine if a node is actually an EDataType
-        """
-        def is_builtin_ref(node):
-            return (type(node) is RuleCrossRef
-                    and node.cls in self.metamodel.namespaces['__base__'])
-        return all(isinstance(x, Match) or is_builtin_ref(x) for x in children)
+    def current_is_datatype(self):
+        return not self._current_cls._tx_attrs
+
+    def is_builtin_ref(self, node):
+        return (type(node) is RuleCrossRef
+                and node.cls in self.metamodel.namespaces['__base__'])
 
     def compute_etype(self, children):
-        # TODO computer better type
+        if len(children) == 1 and self.is_builtin_ref(children[0]):
+            return self.metamodel.namespaces['__base__'][children[0]].eType
         return object
 
     def visit_sequence(self, node, children):

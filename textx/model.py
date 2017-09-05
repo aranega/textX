@@ -329,7 +329,6 @@ def parse_tree_to_objgraph(parser, parse_tree):
             #     except TypeError as e:
             #         # Add class name information in case of
             #         # wrong constructor parameters
-            #         # print("Constructor params: {}".format(text(obj_attrs.__dict__)))
             #         e.args += ("for class %s" %
             #                    inst.__class__.__name__,)
             #         parser.dprint(traceback.print_exc())
@@ -405,6 +404,9 @@ def parse_tree_to_objgraph(parser, parse_tree):
                             value = ObjCrossRef(obj_name=value,
                                                 cls=metaattr.cls,
                                                 position=node[0].position)
+                            parser.crossrefs.append((obj_attr, metaattr,
+                                                     value))
+                            continue
 
                         if not hasattr(obj_attr, txa_attr_name) or \
                                 getattr(obj_attr, txa_attr_name) is None:

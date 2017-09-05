@@ -3,28 +3,85 @@ from pyecore.ecore import *
 from textx.export import metamodel_export
 
 grammar = """
-Move:
-  'widget' name=AB
+StateMachine:
+    'events'
+        events+=Event
+    'end'
+
+    ('resetEvents'
+        resetEvents+=[Event|SMID]
+    'end')?
+
+    'commands'
+        commands+=Command
+    'end'
+
+    states+=State
 ;
 
-A:
+Keyword:
+    'end' | 'events' | 'resetEvents' | 'state' | 'actions'
+;
+
+Event:
+    name=SMID code=ID
+;
+
+Command:
+    name=SMID code=ID
+;
+
+State:
     'state' name=ID
+        ('actions' '{' actions+=[Command] '}')?
+        transitions+=Transition
+    'end'
 ;
 
-AB:
-    INT|/(\w|\+|-)+/
+Transition:
+    event=[Event|SMID] '=>' to_state=[State]
 ;
 
+SMID:
+    !Keyword ID
+;
 
-
+Comment:
+    /\/\*(.|\n)*?\*\//
+;
 """
 
 mm = metamodel_from_str(grammar)
+# for name, mc in mm.namespaces[None].items():
+#     if isinstance(mc, EClass):
+#         print(mc, mc.eStructuralFeatures)
 
 metamodel_export(mm, 'test.dot')
 
 program = mm.model_from_str("""
-widget 44
+events
+  passTrough    GTPT
+  coinInserted  CINS
+end
+
+commands
+  unlockGate    GTUN
+  lockGate      GTLK
+end
+
+state locked
+  actions {lockGate}
+  coinInserted => unlocked
+end
+
+state unlocked
+  actions {unlockGate}
+  passTrough => locked
+end
 """)
 
-print(program.name)
+for x in program.eAllContents():
+    if hasattr(x, 'name'):
+        print(x.name, x.eClass, x)
+
+print(program.states[0].transitions[0].event)
