@@ -587,7 +587,7 @@ class TextXVisitor(PTNodeVisitor):
         return RuleCrossRef(rule_name, rule_name, node.position)
 
     def visit_textx_rule_body(self, node, children):
-        if self.node_is_enumeration(children):
+        if self.rule_defines_enumeration(children):
             current_cls = self._current_cls
             cls = self.metamodel._new_class(current_cls.name, None,
                                             current_cls._tx_position,
@@ -595,14 +595,33 @@ class TextXVisitor(PTNodeVisitor):
             self._current_cls = cls
             for i, literal in enumerate(children):
                 cls.eLiterals.append(EEnumLiteral(i, str(literal)))
+        elif self.rule_defines_datatype(children):
+            current_cls = self._current_cls
+            cls = self.metamodel._new_class(current_cls.name, None,
+                                            current_cls._tx_position,
+                                            kind=EDataType,
+                                            eType=self.compute_etype(children))
+            self._current_cls = cls
         if len(children) == 1:
             return children[0]
         return OrderedChoice(nodes=children[:])
 
-    def node_is_enumeration(self, children):
-        """Tries to determine if a node is actually an enumeration.
+    def rule_defines_enumeration(self, children):
+        """Tries to determine if a node is actually an EEnum.
         """
         return all(type(x) is StrMatch for x in children)
+
+    def rule_defines_datatype(self, children):
+        """Tries to determine if a node is actually an EDataType
+        """
+        def is_builtin_ref(node):
+            return (type(node) is RuleCrossRef
+                    and node.cls in self.metamodel.namespaces['__base__'])
+        return all(isinstance(x, Match) or is_builtin_ref(x) for x in children)
+
+    def compute_etype(self, children):
+        # TODO computer better type
+        return object
 
     def visit_sequence(self, node, children):
         if len(children) == 1:

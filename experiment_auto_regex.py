@@ -2,18 +2,28 @@ from textx.metamodel import metamodel_from_str
 from pyecore.ecore import *
 
 grammar = """
-Modifier:
-    (static?='static' final?='final' visibility=Visibility)#
+Move:
+  'widget' name=AB
 ;
 
-Visibility:
-    'public' | 'private' | 'protected';
+A:
+    'state' name=ID
+;
+
+AB:
+    INT|/(\w|\+|-)+/
+;
+
+
+
 """
 
 mm = metamodel_from_str(grammar)
 
+print()
+
 program = mm.model_from_str("""
-final private
+widget 44
 """)
 
-print(program.static)
+print(program.name)

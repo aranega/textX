@@ -10,7 +10,7 @@ import sys
 import codecs
 import traceback
 from arpeggio import Parser, Sequence, NoMatch, EOF, Terminal
-from pyecore.ecore import EReference, EClass
+from pyecore.ecore import *
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, MULT_ZEROORMORE, \
     RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
@@ -236,7 +236,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     nt.rule_name)
             else:
                 value = process_match(nt[0])
-                if cls:
+                if type(cls) is EEnum:
                     value = cls.getEEnumLiteral(value)
                 return value
 
