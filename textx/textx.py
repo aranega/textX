@@ -590,6 +590,7 @@ class TextXVisitor(PTNodeVisitor):
     def visit_textx_rule_body(self, node, children):
         if self.rule_is_enumeration(children):
             current_cls = self._current_cls
+            self.metamodel.eClassifiers.remove(current_cls)
             cls = self.metamodel._new_class(current_cls.name, None,
                                             current_cls._tx_position,
                                             kind=EEnum)
@@ -598,6 +599,7 @@ class TextXVisitor(PTNodeVisitor):
                 cls.eLiterals.append(EEnumLiteral(i, str(literal)))
         elif self.current_is_datatype():
             current_cls = self._current_cls
+            self.metamodel.eClassifiers.remove(current_cls)
             cls = self.metamodel._new_class(current_cls.name, None,
                                             current_cls._tx_position,
                                             kind=EDataType,

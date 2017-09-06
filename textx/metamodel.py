@@ -60,7 +60,7 @@ class TextXClass(object):
     pass
 
 
-class TextXMetaModel(DebugPrinter):
+class TextXMetaModel(DebugPrinter, EPackage):
     """
     Meta-model contains all information about language abstract syntax.
     Furthermore, this class is in charge for model instantiation and new
@@ -184,7 +184,17 @@ class TextXMetaModel(DebugPrinter):
 
         # Enter namespace for given file or None if metamodel is
         # constructed from string.
-        self._enter_namespace(self._namespace_for_file_name(file_name))
+        namespace = self._namespace_for_file_name(file_name)
+        self._enter_namespace(namespace)
+
+        default_name = 'default'
+        if not self.nsURI:
+            self.nsURI = ('http://{}/'.format(namespace) if namespace
+                          else default_name)
+        if not self.nsPrefix:
+            self.nsPrefix = namespace if namespace else default_name
+        if not self.name:
+            self.name = namespace if namespace else default_name
 
     def _namespace_for_file_name(self, file_name):
         if file_name is None or self.root_path is None:
@@ -309,6 +319,7 @@ class TextXMetaModel(DebugPrinter):
         both for textX created classes as well as user classes.
         """
         cls._tx_metamodel = self
+        self.eClassifiers.append(cls)
 
         # Attribute information (MetaAttr instances) keyed by name.
         cls._tx_attrs = OrderedDict()

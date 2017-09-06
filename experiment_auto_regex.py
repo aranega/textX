@@ -2,6 +2,8 @@ from textx.metamodel import metamodel_from_str
 from pyecore.ecore import *
 from textx.export import metamodel_export
 
+from pyecore.resources import ResourceSet
+
 grammar = """
 StateMachine:
     'events'
@@ -84,4 +86,16 @@ for x in program.eAllContents():
     if hasattr(x, 'name'):
         print(x.name, x.eClass, x)
 
-print(program.states[0].transitions[0].event)
+print(program.eClass.ePackage.name)
+
+# save model as XMI
+rset = ResourceSet()
+resource = rset.create_resource('test.xmi')
+
+resource.append(program)
+resource.save()
+
+# save metamodel as Ecore
+resource = rset.create_resource('test_mm.ecore')
+resource.append(mm)
+resource.save()
