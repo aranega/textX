@@ -176,6 +176,7 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             except AttributeError:
                 # model is some primitive python type (e.g. str)
                 pass
+            self.crossrefs.clear()
             return model
 
         def get_model_from_str(self, model_str, file_name=None, debug=None):
@@ -205,6 +206,7 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             except AttributeError:
                 # model is some primitive python type (e.g. str)
                 pass
+            self.crossrefs.clear()
             return model
 
     return TextXModelParser(**kwargs)

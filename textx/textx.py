@@ -181,6 +181,8 @@ class TextXVisitor(PTNodeVisitor):
             flags = re.IGNORECASE
         self.keyword_regex = re.compile(r'[^\d\W]\w*', flags)
 
+        self._potential_datatypes = {}
+
         super(TextXVisitor, self).__init__()
 
     def visit_textx_model(self, node, children):
@@ -213,6 +215,8 @@ class TextXVisitor(PTNodeVisitor):
         self._resolve_rule_refs(self.grammar_parser, model_parser)
         self._determine_rule_types(model_parser.metamodel)
         self._resolve_cls_refs(self.grammar_parser, model_parser)
+
+        self._potential_datatypes.clear()
 
         return model_parser
 
@@ -347,6 +351,14 @@ class TextXVisitor(PTNodeVisitor):
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
+            elif cls in self._potential_datatypes:
+                datatype_type = self._potential_datatypes[cls]
+                self.metamodel.eClassifiers.remove(cls)
+                cls = self.metamodel._new_class(cls.name, rule,
+                                                cls._tx_position,
+                                                kind=EDataType,
+                                                eType=datatype_type)
+                self._current_cls = cls
 
         resolved_classes = set()
         for cls in metamodel:
@@ -598,13 +610,8 @@ class TextXVisitor(PTNodeVisitor):
             for i, literal in enumerate(children):
                 cls.eLiterals.append(EEnumLiteral(i, str(literal)))
         elif self.current_is_datatype():
-            current_cls = self._current_cls
-            self.metamodel.eClassifiers.remove(current_cls)
-            cls = self.metamodel._new_class(current_cls.name, None,
-                                            current_cls._tx_position,
-                                            kind=EDataType,
-                                            eType=self.compute_etype(children))
-            self._current_cls = cls
+            self._potential_datatypes[self._current_cls] = \
+                                              self.compute_etype(children)
         if len(children) == 1:
             return children[0]
         return OrderedChoice(nodes=children[:])

@@ -34,6 +34,7 @@ mm = metamodel_from_str(grammar)
 
 metamodel_export(mm, 'test.dot')
 
+
 program = mm.model_from_str("""
 // test
 begin
