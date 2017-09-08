@@ -58,7 +58,7 @@ mm = metamodel_from_str(grammar)
 #     if isinstance(mc, EClass):
 #         print(mc, mc.eStructuralFeatures)
 
-metamodel_export(mm, 'test.dot')
+# metamodel_export(mm, 'test.dot')
 
 program = mm.model_from_str("""
 events
@@ -88,14 +88,23 @@ for x in program.eAllContents():
 
 print(program.eClass.ePackage.name)
 
-# save model as XMI
-rset = ResourceSet()
-resource = rset.create_resource('test.xmi')
+for x in program.eAllContents():
+    print(x)
 
-resource.append(program)
-resource.save()
+for x in program.eContents:
+    print(x)
 
-# save metamodel as Ecore
-resource = rset.create_resource('test_mm.ecore')
-resource.append(mm)
-resource.save()
+print(len(list(program.eAllContents())))
+print(len(list(program.eClass.ePackage.eAllContents())))
+
+# # save model as XMI
+# rset = ResourceSet()
+# resource = rset.create_resource('test.xmi')
+#
+# resource.append(program)
+# resource.save()
+#
+# # save metamodel as Ecore
+# resource = rset.create_resource('test_mm.ecore')
+# resource.append(mm)
+# resource.save()

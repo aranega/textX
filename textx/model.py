@@ -387,7 +387,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     parser.crossrefs.append((model_obj, metaattr, value))
                     return model_obj
 
-                if type(attr_value) is list:
+                if isinstance(attr_value, ECollection):
                     attr_value.append(value)
                 else:
                     setattr(obj_attr, txa_attr_name, value)

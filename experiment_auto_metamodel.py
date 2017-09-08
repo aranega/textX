@@ -2,35 +2,38 @@ from textx.metamodel import metamodel_from_str
 from pyecore.ecore import *
 
 grammar = """
-EntityModel:
-    entities*=Entity
+RhapsodyModel:
+    header= /[^\n]*/
+    root=Object
 ;
 
-Entity:
-    'entity' name=ID '{'
-        properties*=Property
+Object:
+    '{' name=ID
+        properties+=Property
     '}'
 ;
 
 Property:
-    name=ID ':' type=[Entity]
+    '-' name=ID '=' (values=Value (';'? !('-'|'}') values=Value)*)? ';'?
+;
+
+Value:
+     STRING | INT | FLOAT | GUID | Object | ID
+;
+
+GUID:
+    'GUID' value=/[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*-[a-f0-9]*/
 ;
 """
 
 mm = metamodel_from_str(grammar)
+
 model = mm.model_from_str("""
-entity Person {
-    name: string
-    address: Address
-}
-
-entity Address {
-    zip: string
-}
-
-entity string {
+I-Logix-RPY-Archive version 8.7.1 C++ 5066837
+{ IProject
+	- _id = GUID b335390e-08e9-4022-8204-5eefee0b3d18;
 }
 """)
 
 for o in model.eAllContents():
-    print(o.eClass, o.name, o.eClass)
+    print(o.eClass, [x.name for x in o.eClass.eStructuralFeatures])
