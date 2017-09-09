@@ -371,7 +371,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
 
             elif op == 'plain':
                 attr_value = getattr(obj_attr, txa_attr_name)
-                if attr_value and type(attr_value) is not list:
+                if attr_value and not isinstance(attr_value, ECollection):
                     raise TextXSemanticError(
                         "Multiple assignments to attribute {} at {}"
                         .format(attr_name,

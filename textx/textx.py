@@ -330,6 +330,30 @@ class TextXVisitor(PTNodeVisitor):
                             return True
                 abstract = _has_nonmatch_ref(rule)
 
+                # TODO rewrite this and mix it with the previous closure
+                def _has_match_ref(rule):
+                    for r in rule.nodes:
+                        if r.root:
+                            _determine_rule_type(r._tx_class)
+                            result = r._tx_class._tx_type == RULE_MATCH
+                        else:
+                            result = _has_match_ref(r)
+                        if result:
+                            return True
+                match = _has_match_ref(rule)
+
+            def change_to_datatype(cls, rule):
+                datatype_type = self._potential_datatypes[cls]
+                self.metamodel.eClassifiers.remove(cls)
+                cls = self.metamodel \
+                          ._new_class(cls.name, rule,
+                                      cls._tx_position,
+                                      inherits=cls._tx_inh_by,
+                                      rule_type=cls._tx_type,
+                                      kind=EDataType,
+                                      eType=datatype_type)
+                self._current_cls = cls
+
             if abstract:
                 cls._tx_type = RULE_ABSTRACT
                 cls.abstract = True
@@ -337,6 +361,8 @@ class TextXVisitor(PTNodeVisitor):
                 if rule.rule_name and cls.__name__ != rule.rule_name:
                     if rule._tx_class not in cls._tx_inh_by:
                         cls._tx_inh_by.append(rule._tx_class)
+                        if not match:
+                            cls.eSuperTypes.append(rule._tx_class)
                 else:
                     # Recursivelly append all referenced classes.
                     def _add_reffered_classes(rule, inh_by):
@@ -347,18 +373,16 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
-                                        r._tx_class.eSuperTypes.append(cls)
+                                        if not match:
+                                            r._tx_class.eSuperTypes.append(cls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
+                if match:
+                    change_to_datatype(cls, rule)
+
             elif cls in self._potential_datatypes:
-                datatype_type = self._potential_datatypes[cls]
-                self.metamodel.eClassifiers.remove(cls)
-                cls = self.metamodel._new_class(cls.name, rule,
-                                                cls._tx_position,
-                                                kind=EDataType,
-                                                eType=datatype_type)
-                self._current_cls = cls
+                change_to_datatype(cls, rule)
 
         resolved_classes = set()
         for cls in metamodel:
@@ -415,7 +439,9 @@ class TextXVisitor(PTNodeVisitor):
                         lower, upper = 0, 1
                     else:
                         lower, upper = 0, -1
-                    feature_cls = EReference if attr.ref else EAttribute
+
+                    is_ref = attr.ref and not isinstance(attr.cls, EDataType)
+                    feature_cls = EReference if is_ref else EAttribute
                     etype = EBoolean if attr.bool_assignment else attr.cls
                     feature = feature_cls(attr.name, etype, lower=lower,
                                           upper=upper)

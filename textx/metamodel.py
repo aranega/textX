@@ -60,7 +60,7 @@ class TextXClass(object):
     pass
 
 
-class TextXMetaModel(EPackage, DebugPrinter):
+class TextXMetaModel(DebugPrinter, EPackage):
     """
     Meta-model contains all information about language abstract syntax.
     Furthermore, this class is in charge for model instantiation and new
