@@ -656,7 +656,8 @@ class TextXVisitor(PTNodeVisitor):
 
     def compute_etype(self, children):
         if len(children) == 1 and self.is_builtin_ref(children[0]):
-            return self.metamodel.namespaces['__base__'][children[0]].eType
+            print(children[0].cls)
+            return self.metamodel.namespaces['__base__'][children[0].cls].eType
         return object
 
     def visit_sequence(self, node, children):

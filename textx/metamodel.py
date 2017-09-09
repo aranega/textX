@@ -252,7 +252,8 @@ class TextXMetaModel(DebugPrinter, EPackage):
             self._enter_namespace(import_name)
             if self.debug:
                 self.dprint("*** IMPORTING FILE: %s" % import_file_name)
-            metamodel_from_file(import_file_name, metamodel=self)
+            mm = metamodel_from_file(import_file_name)
+            self.namespaces[import_name] = mm.namespaces[import_name]
             self._leave_namespace()
 
         # Add the import to the imported_namespaces for current namespace
