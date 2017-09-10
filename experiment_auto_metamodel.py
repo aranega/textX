@@ -4,6 +4,8 @@ from pyecore.ecore import *
 # Requires a modified version of rhapsody.tx
 meta = metamodel_from_file('a.tx')
 
+print(meta.resource_set.resources)
+
 for x in meta.eAllContents():
     if isinstance(x, EReference):
         print(x.eType.eStructuralFeatures[0].eType.ePackage.nsURI)

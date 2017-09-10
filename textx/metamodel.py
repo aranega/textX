@@ -11,6 +11,7 @@ import os
 from collections import OrderedDict
 from arpeggio import DebugPrinter
 from pyecore.ecore import *
+from pyecore.resources import ResourceSet
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
@@ -112,7 +113,7 @@ class TextXMetaModel(DebugPrinter, EPackage):
     def __init__(self, file_name=None, classes=None, builtins=None,
                  match_filters=None, auto_init_attributes=True,
                  ignore_case=False, skipws=True, ws=None, autokwd=False,
-                 memoization=False, **kwargs):
+                 memoization=False, resource_set=None, **kwargs):
         super(TextXMetaModel, self).__init__(**kwargs)
 
         self.file_name = file_name
@@ -195,6 +196,9 @@ class TextXMetaModel(DebugPrinter, EPackage):
             self.nsPrefix = namespace if namespace else default_name
         if not self.name:
             self.name = namespace if namespace else default_name
+        self.resource_set = resource_set if resource_set else ResourceSet()
+        resource = self.resource_set.create_resource(self.nsURI)
+        resource.append(self)
 
     def _namespace_for_file_name(self, file_name):
         if file_name is None or self.root_path is None:
@@ -252,7 +256,8 @@ class TextXMetaModel(DebugPrinter, EPackage):
             self._enter_namespace(import_name)
             if self.debug:
                 self.dprint("*** IMPORTING FILE: %s" % import_file_name)
-            mm = metamodel_from_file(import_file_name)
+            mm = metamodel_from_file(import_file_name,
+                                     resource_set=self.resource_set)
             self.namespaces[import_name] = mm.namespaces[import_name]
             self._leave_namespace()
 
