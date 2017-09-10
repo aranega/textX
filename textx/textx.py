@@ -355,6 +355,13 @@ class TextXVisitor(PTNodeVisitor):
                 self._current_cls = cls
 
             if abstract:
+                if match:
+                    line, col = (self.grammar_parser
+                                 .pos_to_linecol(cls._tx_position))
+                    raise TextXSemanticError(
+                        'Mixed match and non-match rules in "{}" at '
+                        'position {}.'
+                        .format(rule.rule_name, (line, col)), line, col)
                 cls._tx_type = RULE_ABSTRACT
                 cls.abstract = True
                 # Add inherited classes to this rule's meta-class
@@ -373,13 +380,12 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
-                                        if not match:
-                                            r._tx_class.eSuperTypes.append(cls)
+                                        r._tx_class.eSuperTypes.append(cls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
-                if match:
-                    change_to_datatype(cls, rule)
+                # if match:
+                #     change_to_datatype(cls, rule)
 
             elif cls in self._potential_datatypes:
                 change_to_datatype(cls, rule)

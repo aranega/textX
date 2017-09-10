@@ -10,15 +10,20 @@ Model:
 ;
 
 Type:
-    INT|Object
+    PrimitiveType|ObjectType
 ;
 
-Object:
+PrimitiveType:
+    name=INT
+;
+
+ObjectType:
     'object' name=ID
 ;
 """
 
 mm = metamodel_from_str(grammar)
+print(mm['Type'].eStructuralFeatures)
 
 # metamodel_export(mm, 'test.dot')
 
@@ -26,4 +31,4 @@ program = mm.model_from_str("""
 model test object test 5
 """)
 
-print(program.type)
+print(program.type[0].eContainer())
