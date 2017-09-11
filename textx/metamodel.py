@@ -145,6 +145,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
         # Namespaces
         self.namespaces = {}
         self._namespace_stack = []
+        self._epackage_stack = [self]
 
         # Imported namespaces
         self._imported_namespaces = {}
@@ -215,6 +216,11 @@ class TextXMetaModel(EPackage, DebugPrinter):
         """
         if namespace_name not in self.namespaces:
             self.namespaces[namespace_name] = {}
+            if namespace_name and namespace_name != '__base__':
+                name = namespace_name.split('.', 1)[-1]
+                uri = 'http://{}/'.format(namespace_name)
+                self._epackage_stack.append(EPackage(name=name, nsURI=uri,
+                                                     nsPrefix=namespace_name))
 
             # BASETYPE namespace is imported in each namespace
             # as the first namespace to be searched.
@@ -227,6 +233,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
         """
         Leaves current namespace (i.e. grammar file).
         """
+        self._epackage_stack.pop()
         self._namespace_stack.pop()
 
     def _new_import(self, import_name):
@@ -257,8 +264,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
             if self.debug:
                 self.dprint("*** IMPORTING FILE: %s" % import_file_name)
             mm = metamodel_from_file(import_file_name,
-                                     resource_set=self.resource_set)
-            self.namespaces[import_name] = mm.namespaces[import_name]
+                                     metamodel=self)
             self._leave_namespace()
 
         # Add the import to the imported_namespaces for current namespace
@@ -327,7 +333,8 @@ class TextXMetaModel(EPackage, DebugPrinter):
         both for textX created classes as well as user classes.
         """
         cls._tx_metamodel = self
-        self.eClassifiers.append(cls)
+        # self._current_epackage.eClassifiers.append(cls)
+        cls.ePackage = self._epackage_stack[-1]
 
         # Attribute information (MetaAttr instances) keyed by name.
         cls._tx_attrs = OrderedDict()

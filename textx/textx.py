@@ -344,7 +344,9 @@ class TextXVisitor(PTNodeVisitor):
 
             def change_to_datatype(cls, rule):
                 datatype_type = self._potential_datatypes[cls]
-                self.metamodel.eClassifiers.remove(cls)
+                # self.metamodel.eClassifiers.remove(cls)
+                # self.metamodel._current_epackage.eClassifiers.remove(cls)
+                cls.ePackage = None
                 cls = self.metamodel \
                           ._new_class(cls.name, rule,
                                       cls._tx_position,
@@ -663,7 +665,6 @@ class TextXVisitor(PTNodeVisitor):
 
     def compute_etype(self, children):
         if len(children) == 1 and self.is_builtin_ref(children[0]):
-            print(children[0].cls)
             return self.metamodel.namespaces['__base__'][children[0].cls].eType
         return object
 

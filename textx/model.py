@@ -177,6 +177,7 @@ def get_model_parser(top_rule, comments_model, **kwargs):
                 # model is some primitive python type (e.g. str)
                 pass
             self.crossrefs.clear()
+            self._inst_stack.clear()
             return model
 
         def get_model_from_str(self, model_str, file_name=None, debug=None):
@@ -254,7 +255,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
         if not node.rule_name.startswith('__asgn'):
             # If not assignment
             # Get class
-            mclass = metamodel[node.rule_name]
+            # mclass = metamodel[node.rule_name]
+            mclass = node.rule._tx_class
 
             if mclass._tx_type == RULE_ABSTRACT:
                 # If this meta-class is product of abstract rule replace it
@@ -351,7 +353,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
             attr_name = node.rule._attr_name
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
-            cls = metamodel[model_obj.__class__.__name__]
+            # cls = metamodel[model_obj.__class__.__name__]
+            cls = model_obj.eClass
             metaattr = cls._tx_attrs[attr_name]
 
             # Mangle attribute name to prevent name clashing with property
@@ -546,7 +549,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
         if type(model_obj) in PRIMITIVE_PYTHON_TYPES:
             metaclass = type(model_obj)
         else:
-            metaclass = metamodel[model_obj.__class__.__name__]
+            # metaclass = metamodel[model_obj.__class__.__name__]
+            metaclass = model_obj.eClass
 
             for metaattr in metaclass._tx_attrs.values():
                 # If attribute is containment reference go down

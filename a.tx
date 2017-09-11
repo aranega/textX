@@ -1,7 +1,11 @@
 import b
 
 Model:
-    'model' name=ID '{'
+    'model' name=IDDatatype '{'
     kinds*=Kind
     '}'
+;
+
+IDDatatype:
+    INT
 ;

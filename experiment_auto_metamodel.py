@@ -4,24 +4,25 @@ from pyecore.ecore import *
 # Requires a modified version of rhapsody.tx
 meta = metamodel_from_file('a.tx')
 
-print(meta.resource_set.resources)
-
+# print(meta.namespaces)
 for x in meta.eAllContents():
-    if isinstance(x, EReference):
-        print(x.eType.eStructuralFeatures[0].eType.ePackage.nsURI)
+    print(x)
 
+# print(id(meta['Model'].eStructuralFeatures[0].eType.eStructuralFeatures[0]))
+# print((meta['IDDatatype'].eStructuralFeatures[0]))
+# print((meta['Kind'].eStructuralFeatures[0].eType.eStructuralFeatures[0]))
 
-program = """model test_model {
-    kind zoub
-    kind toto
-    kind zeft
-    kind fjsj
+program = """model 45 {
+    kind val1
+    kind val2
+    kind val3
 }
 """
 
 model = meta.model_from_str(program)
 
-print([x.name for x in model.kinds])
+print(model.name)
+print([x.name.t for x in model.kinds])
 
 #
 # def num_parent(o, i=0):
