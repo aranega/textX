@@ -309,7 +309,7 @@ class TextXVisitor(PTNodeVisitor):
             # Abstract are root rules which haven't got any attributes
             # and reference at least one non-match rule.
             abstract = False
-            if rule.rule_name and cls.name != rule.rule_name:
+            if rule.rule_name and cls.__name__ != rule.rule_name:
                 # Special case. Body of the rule is a single rule
                 # reference and the referenced rule is not match rule.
                 target_cls = metamodel[rule.rule_name]
@@ -430,7 +430,7 @@ class TextXVisitor(PTNodeVisitor):
 
                     # If target cls is of a base type or match rule
                     # then attr can not be a reference.
-                    if attr.cls.name in BASE_TYPE_NAMES \
+                    if attr.cls.__name__ in BASE_TYPE_NAMES \
                             or attr.cls._tx_type == RULE_MATCH:
                         attr.ref = False
                         attr.cont = True
@@ -456,6 +456,7 @@ class TextXVisitor(PTNodeVisitor):
                     feature.position = attr.position
                     if cls.findEStructuralFeature(attr.name) is None:
                         cls.eStructuralFeatures.append(feature)
+
                     if grammar_parser.debug:
                         grammar_parser.dprint(
                             "Resolved attribute {}:{}[cls={}, cont={}, "

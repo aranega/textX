@@ -312,6 +312,8 @@ class TextXMetaModel(EPackage, DebugPrinter):
                         .format(name, hex(id(self)))
 
         cls = kind(name, eType=eType) if eType else kind(name)
+        if not hasattr(cls, '__name__'):
+            cls.__name__ = name
 
         self._init_class(cls, peg_rule, position, position_end, inherits, root,
                          rule_type)
@@ -349,7 +351,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         # Push this class and PEG rule in the current namespace
         current_namespace = self.namespaces[self._namespace_stack[-1]]
-        current_namespace[cls.name] = cls
+        current_namespace[cls.__name__] = cls
 
         if root:
             self.rootcls = cls
