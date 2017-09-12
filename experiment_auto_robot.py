@@ -32,6 +32,8 @@ Comment:
 
 mm = metamodel_from_str(grammar)
 
+print(mm['BOOL'].ePackage)
+
 metamodel_export(mm, 'test.dot')
 
 

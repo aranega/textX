@@ -10,6 +10,7 @@ import codecs
 import os
 from collections import OrderedDict
 from arpeggio import DebugPrinter
+import pyecore.ecore as ecore
 from pyecore.ecore import *
 from pyecore.resources import ResourceSet
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
@@ -154,26 +155,23 @@ class TextXMetaModel(EPackage, DebugPrinter):
         self._enter_namespace('__base__')
 
         # Base types hierarchy should exist in each meta-model
-        base_id = self._new_class('ID', ID, 0, kind=EDataType, eType=str)
-        base_string = self._new_class('STRING', STRING, 0, kind=EDataType,
-                                      eType=str)
-        base_bool = self._new_class('BOOL', BOOL, 0, kind=EDataType,
-                                    eType=bool)
-        base_int = self._new_class('INT', INT, 0, kind=EDataType,
-                                   eType=int)
-        base_float = self._new_class('FLOAT', FLOAT, 0, kind=EDataType,
-                                     eType=float)
-        base_number = self._new_class('NUMBER', NUMBER, 0,
-                                      inherits=[base_float, base_int],
-                                      kind=EDataType,
-                                      eType=int)
-        base_type = self._new_class('BASETYPE', BASETYPE, 0,
-                                    inherits=[base_number, base_bool, base_id,
-                                              base_string], kind=EDataType,
-                                    eType=str)
-        self._new_class('OBJECT', OBJECT, 0, inherits=[base_type],
-                        rule_type=RULE_ABSTRACT, kind=EDataType,
-                        eType=object)
+        # Registration is conditional (either the original or the ecore ones)
+        if False:
+            base_id = self._new_class('ID', ID, 0)
+            base_string = self._new_class('STRING', STRING, 0)
+            base_bool = self._new_class('BOOL', BOOL, 0)
+            base_int = self._new_class('INT', INT, 0)
+            base_float = self._new_class('FLOAT', FLOAT, 0)
+            base_number = self._new_class('NUMBER', NUMBER, 0,
+                                          inherits=[base_float, base_int])
+            base_type = self._new_class('BASETYPE', BASETYPE, 0,
+                                        inherits=[base_number, base_bool,
+                                                  base_id, base_string])
+            self._new_class('OBJECT', OBJECT, 0, inherits=[base_type],
+                            rule_type=RULE_ABSTRACT)
+            self._register_ecore_datatypes()
+        else:
+            self._register_ecore_datatypes()
 
         # Resolve file name to absolute path.
         if file_name:
@@ -321,6 +319,9 @@ class TextXMetaModel(EPackage, DebugPrinter):
         if not hasattr(cls, '__name__'):
             cls.__name__ = name
 
+        # Add the new type to the current EPackage
+        cls.ePackage = self._epackage_stack[-1]
+
         self._init_class(cls, peg_rule, position, position_end, inherits, root,
                          rule_type)
 
@@ -333,8 +334,6 @@ class TextXMetaModel(EPackage, DebugPrinter):
         both for textX created classes as well as user classes.
         """
         cls._tx_metamodel = self
-        # self._current_epackage.eClassifiers.append(cls)
-        cls.ePackage = self._epackage_stack[-1]
 
         # Attribute information (MetaAttr instances) keyed by name.
         cls._tx_attrs = OrderedDict()
@@ -362,6 +361,47 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         if root:
             self.rootcls = cls
+
+    def _register_ecore_datatypes(self):
+        fake_epackage = EPackage(ecore.name, nsPrefix=ecore.nsPrefix,
+                                 nsURI=ecore.nsURI)
+
+        def _duplicate_datatype(cls):
+            import copy
+            new_cls = cls.eClass(cls.name, cls.eType)
+            new_cls.default_value = cls.default_value
+            new_cls.from_string = copy.copy(cls.from_string)
+            new_cls.to_string = copy.copy(cls.to_string)
+            new_cls.instanceClassName = cls.instanceClassName
+            new_cls.type_as_factory = cls.type_as_factory
+            new_cls.ePackage = fake_epackage
+            return new_cls
+
+        def _insert_class(cls, peg_rule, position, name=None, duplicate=True,
+                          **kwargs):
+            new_cls = cls
+            if duplicate:
+                new_cls = _duplicate_datatype(cls)
+
+            cls_name = name or new_cls.name
+            if not hasattr(new_cls, '__name__'):
+                new_cls.__name__ = cls_name
+
+            self._init_class(new_cls, peg_rule, position, **kwargs)
+            return new_cls
+
+        base_id = _insert_class(EString, ID, 0, name='ID')
+        base_string = _insert_class(EString, STRING, 0, name='STRING')
+        base_bool = _insert_class(EBoolean, BOOL, 0, name='BOOL')
+        base_int = _insert_class(EInt, INT, 0, name='INT')
+        base_float = _insert_class(EFloat, FLOAT, 0, name='FLOAT')
+        base_number = _insert_class(EInt, NUMBER, 0, name='NUMBER',
+                                    inherits=[base_float, base_int])
+        base_type = _insert_class(ENativeType, BASETYPE, 0, name='BASETYPE',
+                                  inherits=[base_number, base_bool, base_id,
+                                            base_string])
+        _insert_class(ENativeType, OBJECT, 0, inherits=[base_type],
+                      rule_type=RULE_ABSTRACT, name='OBJECT')
 
     def _init_obj_attrs(self, obj, user=False):
         """
