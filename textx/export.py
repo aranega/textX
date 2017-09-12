@@ -164,7 +164,7 @@ def model_export(model, file_name):
             processed_set.add(obj)
 
             attrs = ""
-            obj_cls = obj.__class__
+            obj_cls = obj.eClass if hasattr(obj, 'eClass') else obj.__class__
             name = ""
             for attr_name, attr in obj_cls._tx_attrs.items():
 
