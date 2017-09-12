@@ -12,7 +12,7 @@ from collections import OrderedDict
 from arpeggio import DebugPrinter
 import pyecore.ecore as ecore
 from pyecore.ecore import *
-from pyecore.resources import ResourceSet
+from pyecore.resources import ResourceSet, Resource, URI
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
@@ -363,8 +363,11 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self.rootcls = cls
 
     def _register_ecore_datatypes(self):
+        # We add a fake resource and a fake EPackage for serialization purposes
+        resource = Resource(URI(ecore.nsURI))
         fake_epackage = EPackage(ecore.name, nsPrefix=ecore.nsPrefix,
                                  nsURI=ecore.nsURI)
+        resource.append(fake_epackage)
 
         def _duplicate_datatype(cls):
             import copy
