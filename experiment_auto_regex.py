@@ -23,6 +23,7 @@ ObjectType:
 """
 
 mm = metamodel_from_str(grammar)
+print(mm.resource_set.resources)
 print(mm['Type'].eStructuralFeatures)
 
 # metamodel_export(mm, 'test.dot')
@@ -31,4 +32,5 @@ program = mm.model_from_str("""
 model test object test 5
 """)
 
-print(program.type[0].eContainer())
+
+print(program.eClass.eResource)

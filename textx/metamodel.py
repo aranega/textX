@@ -5,7 +5,7 @@
 # Copyright: (c) 2014-2017 Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
 # License: MIT License
 #######################################################################
-
+from __future__ import absolute_import
 import codecs
 import os
 from collections import OrderedDict
@@ -13,6 +13,7 @@ from arpeggio import DebugPrinter
 import pyecore.ecore as ecore
 from pyecore.ecore import *
 from pyecore.resources import ResourceSet, Resource, URI
+from textx.six import add_metaclass
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
@@ -55,11 +56,6 @@ class MetaAttr(object):
         self.ref = ref
         self.bool_assignment = bool_assignment
         self.position = position
-
-
-class TextXClass(object):
-    """Base class for all language classes."""
-    pass
 
 
 class TextXMetaModel(EPackage, DebugPrinter):
@@ -147,6 +143,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
         self.namespaces = {}
         self._namespace_stack = []
         self._epackage_stack = [self]
+        self.resource_set = resource_set if resource_set else ResourceSet()
 
         # Imported namespaces
         self._imported_namespaces = {}
@@ -173,6 +170,8 @@ class TextXMetaModel(EPackage, DebugPrinter):
         else:
             self._register_ecore_datatypes()
 
+        self._leave_namespace()
+
         # Resolve file name to absolute path.
         if file_name:
             file_name = os.path.abspath(file_name)
@@ -182,11 +181,8 @@ class TextXMetaModel(EPackage, DebugPrinter):
         # used.
         self.root_path = os.path.dirname(file_name) if file_name else None
 
-        # Enter namespace for given file or None if metamodel is
-        # constructed from string.
+        # Get main namespace
         namespace = self._namespace_for_file_name(file_name)
-        self._enter_namespace(namespace)
-
         default_name = 'default'
         if not self.nsURI:
             self.nsURI = ('http://{}/'.format(namespace) if namespace
@@ -195,9 +191,12 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self.nsPrefix = namespace if namespace else default_name
         if not self.name:
             self.name = namespace if namespace else default_name
-        self.resource_set = resource_set if resource_set else ResourceSet()
         resource = self.resource_set.create_resource(self.nsURI)
         resource.append(self)
+
+        # Enter namespace for given file or None if metamodel is
+        # constructed from string.
+        self._enter_namespace(namespace)
 
     def _namespace_for_file_name(self, file_name):
         if file_name is None or self.root_path is None:
@@ -214,17 +213,27 @@ class TextXMetaModel(EPackage, DebugPrinter):
         """
         if namespace_name not in self.namespaces:
             self.namespaces[namespace_name] = {}
-            if namespace_name and namespace_name != '__base__':
-                name = namespace_name.split('.', 1)[-1]
-                uri = 'http://{}/'.format(namespace_name)
-                self._epackage_stack.append(EPackage(name=name, nsURI=uri,
-                                                     nsPrefix=namespace_name))
 
             # BASETYPE namespace is imported in each namespace
             # as the first namespace to be searched.
             self._imported_namespaces[namespace_name] = \
                 [self.namespaces['__base__']]
 
+        uri = 'http://{}/'.format(namespace_name)
+        if uri in self.resource_set.resources:
+            resource = self.resource_set.get_resource(uri)
+            epackage = resource.contents[0]
+        elif namespace_name and namespace_name != '__base__':
+            name = namespace_name.split('.', 1)[-1]
+            resource = self.resource_set.create_resource(uri)
+            epackage = EPackage(name=name, nsURI=uri,
+                                nsPrefix=namespace_name)
+            resource.contents.append(epackage)
+        elif namespace_name == '__base__':
+            epackage = ecore.eClass
+        else:
+            epackage = self
+        self._epackage_stack.append(epackage)
         self._namespace_stack.append(namespace_name)
 
     def _leave_namespace(self):
@@ -261,8 +270,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self._enter_namespace(import_name)
             if self.debug:
                 self.dprint("*** IMPORTING FILE: %s" % import_file_name)
-            mm = metamodel_from_file(import_file_name,
-                                     metamodel=self)
+            metamodel_from_file(import_file_name, metamodel=self)
             self._leave_namespace()
 
         # Add the import to the imported_namespaces for current namespace
@@ -286,34 +294,46 @@ class TextXMetaModel(EPackage, DebugPrinter):
                 RULE_COMMON, RULE_ABSTRACT or RULE_MATCH.
         """
 
-        class Meta(TextXClass):
+        class TextXMetaClass(type):
+
+            def __repr__(cls):
+                return '<textx:{} class at {}>'.format(cls._tx_fqn,
+                                                       id(cls))
+
+        @add_metaclass(TextXMetaClass)
+        class TextXClass(object):
             """
-            Dynamic metaclass. Each textX rule will result in creating
-            one Meta class with the type name of the rule.
-            Model is a graph of python instances of this metaclasses.
+            Dynamicaly created class. Each textX rule will result in
+            creating one Python class with the type name of the rule.
+            textX model is a graph of instances of these Python classes.
+
             Attributes:
                 _tx_attrs(dict): A dict of meta-attributes keyed by name.
                     Used by common rules.
                 _tx_inh_by(list): Classes that inherits this one. Used by
                     abstract rules.
-                _tx_position(int): A position in the input string where this
-                    class is defined.
+                _tx_position(int): A position in the input string where
+                    this class is defined.
                 _tx_position_end(int): A position in the input string where
                     this class ends.
-                _tx_type(int): The type of the textX rule this class is created
-                    for. See textx.const
-                _tx_metamodel(TextXMetaModel): A metamodel this class belongs
-                    to.
+                _tx_type(int): The type of the textX rule this class is
+                    created for. See textx.const
+                _tx_metamodel(TextXMetaModel): A metamodel this class
+                    belongs to.
                 _tx_peg_rule(ParsingExpression): An Arpeggio PEG rule that
                     matches this class.
+
             """
 
             def __repr__(self):
+                """
+                Used for TextXClass bellow.
+                """
                 if hasattr(self, 'name'):
                     return "<{}:{}>".format(name, self.name)
                 else:
-                    return "<textx:{} object at {}>"\
-                        .format(name, hex(id(self)))
+                    return "<textx:{} instance at {}>"\
+                        .format(self._tx_fqn, hex(id(self)))
 
         cls = kind(name, eType=eType) if eType else kind(name)
         if not hasattr(cls, '__name__'):
@@ -357,10 +377,22 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         # Push this class and PEG rule in the current namespace
         current_namespace = self.namespaces[self._namespace_stack[-1]]
+        cls._tx_fqn = self._cls_fqn(cls)
         current_namespace[cls.__name__] = cls
 
         if root:
             self.rootcls = cls
+
+    def _cls_fqn(self, cls):
+        """
+        Returns fully qualified name for the class based on current namespace
+        and the class name.
+        """
+        ns = self._namespace_stack[-1]
+        if ns in ['__base__', None]:
+            return cls.__name__
+        else:
+            return ns + '.' + cls.__name__
 
     def _register_ecore_datatypes(self):
         # We add a fake resource and a fake EPackage for serialization purposes

@@ -1,5 +1,5 @@
 import relative.third
 
 Second:
-  thirds+=Third
+  second+=Third
 ;

@@ -29,7 +29,7 @@ def test_import():
 
 def test_multiple_imports():
     """
-    Test that rules grammars imported from multiple places
+    Test that grammar rules imported from multiple places
     results in the same meta-class objects.
     """
 
@@ -37,11 +37,7 @@ def test_multiple_imports():
     mm = metamodel_from_file(os.path.join(current_dir,
                              'multiple', 'first.tx'))
 
-    print(mm['First']._tx_attrs)
-    print(mm['First']._tx_attrs['first'].cls._tx_attrs['second'].cls.__name__)
-    print(mm['Third'])
-    print(type(mm['First']._tx_attrs['first']))
-    assert mm['First']._tx_attrs['first'].cls._tx_attrs['second'].cls \
+    assert mm['First']._tx_attrs['seconds'].cls._tx_attrs['thirds'].cls \
         is mm['relative.third.Third']
     metamodel_export(mm, 'multipleimport_test_mm.dot')
 

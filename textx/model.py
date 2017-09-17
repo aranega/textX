@@ -255,7 +255,6 @@ def parse_tree_to_objgraph(parser, parse_tree):
         if not node.rule_name.startswith('__asgn'):
             # If not assignment
             # Get class
-            # mclass = metamodel[node.rule_name]
             mclass = node.rule._tx_class
 
             if mclass._tx_type == RULE_ABSTRACT:
@@ -353,7 +352,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
             attr_name = node.rule._attr_name
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
-            # cls = metamodel[model_obj.__class__.__name__]
+            cls = type(model_obj)
             cls = model_obj.eClass
             metaattr = cls._tx_attrs[attr_name]
 
@@ -546,12 +545,9 @@ def parse_tree_to_objgraph(parser, parse_tree):
         Depth-first model object processing.
         """
 
-        if type(model_obj) in PRIMITIVE_PYTHON_TYPES:
-            metaclass = type(model_obj)
-        else:
-            # metaclass = metamodel[model_obj.__class__.__name__]
-            metaclass = model_obj.eClass
-
+        metaclass = type(model_obj)
+        metaclass = model_obj.eClass
+        if type(model_obj) not in PRIMITIVE_PYTHON_TYPES:
             for metaattr in metaclass._tx_attrs.values():
                 # If attribute is containment reference go down
                 if metaattr.ref and metaattr.cont:
