@@ -456,8 +456,9 @@ class TextXVisitor(PTNodeVisitor):
                     if attr.cont:
                         feature.containment = True
                     feature.position = attr.position
-                    if cls.findEStructuralFeature(attr.name) is None:
-                        cls.eStructuralFeatures.append(feature)
+                    tmp = cls.eClass if isinstance(cls, type) else cls
+                    if tmp.findEStructuralFeature(attr.name) is None:
+                        tmp.eStructuralFeatures.append(feature)
 
                     if grammar_parser.debug:
                         grammar_parser.dprint(

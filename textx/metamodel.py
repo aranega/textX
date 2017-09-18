@@ -166,7 +166,6 @@ class TextXMetaModel(EPackage, DebugPrinter):
                                                   base_id, base_string])
             self._new_class('OBJECT', OBJECT, 0, inherits=[base_type],
                             rule_type=RULE_ABSTRACT)
-            self._register_ecore_datatypes()
         else:
             self._register_ecore_datatypes()
 
@@ -281,7 +280,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
     def _new_class(self, name, peg_rule, position, position_end=None,
                    inherits=None, root=False, rule_type=RULE_MATCH,
-                   kind=EClass, eType=None):
+                   kind=None, eType=None):
         """
         Creates a new class with the given name in the current namespace.
         Args:
@@ -301,7 +300,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
                                                        id(cls))
 
         @add_metaclass(TextXMetaClass)
-        class TextXClass(object):
+        class TextXClass(EClass):
             """
             Dynamicaly created class. Each textX rule will result in
             creating one Python class with the type name of the rule.
@@ -335,7 +334,12 @@ class TextXMetaModel(EPackage, DebugPrinter):
                     return "<textx:{} instance at {}>"\
                         .format(self._tx_fqn, hex(id(self)))
 
-        cls = kind(name, eType=eType) if eType else kind(name)
+        if kind and eType:
+            cls = kind(name, eType=eType)
+        elif kind:
+            cls = kind(name)
+        else:
+            cls = TextXClass(name)
         if not hasattr(cls, '__name__'):
             cls.__name__ = name
 
@@ -401,22 +405,26 @@ class TextXMetaModel(EPackage, DebugPrinter):
                                  nsURI=ecore.nsURI)
         resource.append(fake_epackage)
 
-        def _duplicate_datatype(cls):
+        def _duplicate_datatype(cls, default_value=None):
             import copy
-            new_cls = cls.eClass(cls.name, cls.eType)
-            new_cls.default_value = cls.default_value
+            new_cls = cls.eClass(cls.name, eType=cls.eType)
+            if default_value is None:
+                new_cls.default_value = cls.default_value
+            else:
+                new_cls.default_value = default_value
+            new_cls.eType = cls.eType
             new_cls.from_string = copy.copy(cls.from_string)
             new_cls.to_string = copy.copy(cls.to_string)
-            new_cls.instanceClassName = cls.instanceClassName
             new_cls.type_as_factory = cls.type_as_factory
             new_cls.ePackage = fake_epackage
+
             return new_cls
 
         def _insert_class(cls, peg_rule, position, name=None, duplicate=True,
-                          **kwargs):
+                          default_value=None, **kwargs):
             new_cls = cls
             if duplicate:
-                new_cls = _duplicate_datatype(cls)
+                new_cls = _duplicate_datatype(cls, default_value)
 
             cls_name = name or new_cls.name
             if not hasattr(new_cls, '__name__'):
@@ -425,8 +433,9 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self._init_class(new_cls, peg_rule, position, **kwargs)
             return new_cls
 
-        base_id = _insert_class(EString, ID, 0, name='ID')
-        base_string = _insert_class(EString, STRING, 0, name='STRING')
+        base_id = _insert_class(EString, ID, 0, name='ID', default_value='')
+        base_string = _insert_class(EString, STRING, 0, name='STRING',
+                                    default_value='')
         base_bool = _insert_class(EBoolean, BOOL, 0, name='BOOL')
         base_int = _insert_class(EInt, INT, 0, name='INT')
         base_float = _insert_class(EFloat, FLOAT, 0, name='FLOAT')

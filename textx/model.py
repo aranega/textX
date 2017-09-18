@@ -353,7 +353,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
             cls = type(model_obj)
-            cls = model_obj.eClass
+            cls = cls.eClass if not hasattr(cls, '_tx_attrs') else cls
             metaattr = cls._tx_attrs[attr_name]
 
             # Mangle attribute name to prevent name clashing with property
