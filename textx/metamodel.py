@@ -2,7 +2,8 @@
 # Name: metamodel.py
 # Purpose: Meta-model construction.
 # Author: Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
-# Copyright: (c) 2014-2017 Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
+# Copyright:
+#   (c) 2014-2017 Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
 # License: MIT License
 #######################################################################
 from __future__ import absolute_import
@@ -199,7 +200,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         # Enter namespace for given file or None if metamodel is
         # constructed from string.
-        self._enter_namespace(namespace)
+        self._enter_namespace(self._namespace_for_file_name(file_name))
 
     def _namespace_for_file_name(self, file_name):
         if file_name is None or self.root_path is None:
