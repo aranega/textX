@@ -1,6 +1,8 @@
 from os.path import join, dirname
 from textx.metamodel import metamodel_from_str
 from textx.export import metamodel_export, model_export
+from pyecore.ecore import EObject, EMetaclass, EReference, EAttribute, \
+                            ENativeType, EEnum
 
 grammar = '''
 Calc: assignments*=Assignment expression=Expression;
@@ -16,7 +18,11 @@ Operand: op=NUMBER | op=ID | ('(' op=Expression ')');
 # Global variable namespace
 namespace = {}
 
+PlusOrMinus = EEnum('PlusOrMinus', literals=('+', '-'))
+MultOrDiv = EEnum('MultOrDiv', literals=('*', '/'))
 
+
+@EMetaclass
 class Calc(object):
     def __init__(self, **kwargs):
         self.assignments = kwargs.pop('assignments')
@@ -30,7 +36,10 @@ class Calc(object):
         return self.expression.value
 
 
+@EMetaclass
 class ExpressionElement(object):
+    op = EReference(eType=EObject, upper=-1)
+
     def __init__(self, **kwargs):
 
         # textX will pass in parent attribute used for parent-child
@@ -44,6 +53,8 @@ class ExpressionElement(object):
 
 
 class Factor(ExpressionElement):
+    sign = EAttribute(eType=PlusOrMinus)
+
     def __init__(self, **kwargs):
         self.sign = kwargs.pop('sign', '+')
         super(Factor, self).__init__(**kwargs)
@@ -78,7 +89,12 @@ class Expression(ExpressionElement):
         return ret
 
 
+Calc.expression = EReference('expression', Expression)
+
+
 class Operand(ExpressionElement):
+    op = EAttribute(eType=ENativeType)
+
     @property
     def value(self):
         op = self.op
@@ -93,11 +109,14 @@ class Operand(ExpressionElement):
                             .format(op, self._tx_position))
 
 
+Factor.op = EReference('op', Operand)
+
+
 def main(debug=False):
 
     calc_mm = metamodel_from_str(grammar,
                                  classes=[Calc, Expression, Term, Factor,
-                                          Operand],
+                                          Operand, PlusOrMinus, MultOrDiv],
                                  debug=debug)
 
     this_folder = dirname(__file__)

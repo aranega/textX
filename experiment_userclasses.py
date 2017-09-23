@@ -41,6 +41,9 @@ Entity.eStructuralFeatures.append(EReference('ref_by', Property,
 class EntityModel(EObject, metaclass=MetaEClass):
     entities = EReference(eType=Entity, containment=True, upper=-1)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+
 # Dynamic EntityModel
 # EntityModel = EClass('EntityModel')
 # EntityModel.eStructuralFeatures.append(EReference('entities',

@@ -1,6 +1,8 @@
 from os.path import join, dirname
 from textx.metamodel import metamodel_from_str
 from textx.export import metamodel_export, model_export
+from pyecore.ecore import EObject, EMetaclass, EReference, EAttribute, \
+                            ENativeType, EBoolean
 
 grammar = '''
 Bool: assignments*=Assignment expression=Or;
@@ -15,7 +17,10 @@ Operand: op=BOOL | op=ID | ( '(' op=Or ')' );
 namespace = {}
 
 
+@EMetaclass
 class Bool(object):
+    assignments = EReference(eType=EObject, upper=-1)
+
     def __init__(self, **kwargs):
         self.assignments = kwargs.pop('assignments')
         self.expression = kwargs.pop('expression')
@@ -28,6 +33,7 @@ class Bool(object):
         return self.expression.value
 
 
+@EMetaclass
 class ExpressionElement(object):
     def __init__(self, **kwargs):
 
@@ -50,6 +56,9 @@ class Or(ExpressionElement):
         return ret
 
 
+Bool.expression = EReference('expression', eType=Or)
+
+
 class And(ExpressionElement):
     @property
     def value(self):
@@ -59,7 +68,12 @@ class And(ExpressionElement):
         return ret
 
 
+Or.op = EReference('op', And, upper=-1)
+
+
 class Not(ExpressionElement):
+    _not = EAttribute(eType=EBoolean)
+
     def __init__(self, **kwargs):
         self._not = kwargs.pop('_not')
         super(Not, self).__init__(**kwargs)
@@ -70,7 +84,15 @@ class Not(ExpressionElement):
         return not ret if self._not else ret
 
 
+And.op = EReference('op', Not, upper=-1)
+
+
 class Operand(ExpressionElement):
+    op = EAttribute(eType=ENativeType)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     @property
     def value(self):
         op = self.op
@@ -81,6 +103,9 @@ class Operand(ExpressionElement):
         else:
             raise Exception('Unknown variable "{}" at position {}'
                             .format(op, self._tx_position))
+
+
+Not.op = EReference('op', Operand)
 
 
 def main(debug=False):

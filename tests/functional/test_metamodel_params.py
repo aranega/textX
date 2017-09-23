@@ -40,12 +40,12 @@ def test_ws():
     meta = metamodel_from_str(langdef)
 
     # Default ws are space, tab and newline
-    meta.model_from_str("""start  first 
+    meta.model_from_str("""start  first
             first second""")
 
     meta = metamodel_from_str(langdef, ws=' ')
     with pytest.raises(TextXSyntaxError):
-        meta.model_from_str("""start  first 
+        meta.model_from_str("""start  first
                 first second""")
 
     meta.model_from_str('start first first second')
@@ -71,5 +71,3 @@ def test_autokwd():
     assert hasattr(model, 'rules')
     assert len(model.rules) == 2
     assert model.rules[1] == 'first'
-
-

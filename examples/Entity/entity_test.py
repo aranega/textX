@@ -3,11 +3,13 @@ import os
 from os.path import dirname, join
 from textx.metamodel import metamodel_from_file
 from textx.export import metamodel_export, model_export
+from pyecore.ecore import EObject, EAttribute, EString, EMetaclass
 
 
 this_folder = dirname(__file__)
 
 
+@EMetaclass
 class SimpleType(object):
     """
     We are registering user SimpleType class to support
@@ -15,12 +17,17 @@ class SimpleType(object):
     Thus, user doesn't need to provide integer and string
     types in the model but can reference them in attribute types nevertheless.
     """
+    name = EAttribute(eType=EString)
+
     def __init__(self, parent, name):
         self.parent = parent
         self.name = name
 
     def __str__(self):
         return self.name
+
+
+SimpleType._staticEClass = False
 
 
 def get_entity_mm(debug=False):

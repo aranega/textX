@@ -274,12 +274,14 @@ def parse_tree_to_objgraph(parser, parse_tree):
             # use it instead of generic one
             if node.rule_name in metamodel.user_classes:
                 user_class = metamodel.user_classes[node.rule_name]
-
                 # Object initialization will be done afterwards
                 # At this point we need object to be allocated
                 # So that nested object get correct reference
                 # inst = user_class.__new__(user_class)
-                inst = user_class()
+                if isinstance(user_class, EClass):
+                    inst = user_class()
+                else:
+                    inst = user_class.__new__(user_class)
 
                 # Initialize object attributes for user class
                 # parser.metamodel._init_obj_attrs(inst, user=True)
@@ -317,25 +319,25 @@ def parse_tree_to_objgraph(parser, parse_tree):
 
             # If the class is user supplied we need to do
             # a proper initialization at this point.
-            # if node.rule_name in metamodel.user_classes:
-            #     try:
-            #         # Get only attributes defined by the grammar as well
-            #         # as `parent` if exists
-            #         attrs = {}
-            #         # if hasattr(obj_attrs, '_txa_parent'):
-            #         #     attrs['parent'] = obj_attrs._txa_parent
-            #         #     del obj_attrs._txa_parent
-            #         # for a in obj_attrs.__class__._tx_attrs:
-            #         #     attrs[a] = getattr(obj_attrs, "_txa_%s" % a)
-            #         #     delattr(obj_attrs, "_txa_%s" % a)
-            #         inst.__init__(**attrs)
-            #     except TypeError as e:
-            #         # Add class name information in case of
-            #         # wrong constructor parameters
-            #         e.args += ("for class %s" %
-            #                    inst.__class__.__name__,)
-            #         parser.dprint(traceback.print_exc())
-            #         raise e
+            if node.rule_name in metamodel.user_classes:
+                try:
+                    # Get only attributes defined by the grammar as well
+                    # as `parent` if exists
+                    attrs = {}
+                    if hasattr(obj_attrs, '_txa_parent'):
+                        attrs['parent'] = obj_attrs._txa_parent
+                        del obj_attrs._txa_parent
+                    for a in obj_attrs.eClass.eAllStructuralFeatures():
+                        attrs[a.name] = getattr(obj_attrs, a.name)
+                        # delattr(obj_attrs, a.name)
+                    inst.__init__(**attrs)
+                except TypeError as e:
+                    # Add class name information in case of
+                    # wrong constructor parameters
+                    e.args += ("for class %s" %
+                               inst.__class__.__name__,)
+                    parser.dprint(traceback.print_exc())
+                    raise e
 
             # Special case for 'name' attrib. It is used for cross-referencing
             if hasattr(inst, 'name') and inst.name:
@@ -373,7 +375,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
 
             elif op == 'plain':
                 attr_value = getattr(obj_attr, txa_attr_name)
-                if attr_value and not isinstance(attr_value, ECollection):
+                if attr_value and not isinstance(attr_value, (ECollection,
+                                                              EEnumLiteral)):
                     raise TextXSemanticError(
                         "Multiple assignments to attribute {} at {}"
                         .format(attr_name,

@@ -343,6 +343,8 @@ class TextXVisitor(PTNodeVisitor):
                 match = _has_match_ref(rule)
 
             def change_to_datatype(cls, rule):
+                if isinstance(cls, EDataType):
+                    return
                 datatype_type = self._potential_datatypes[cls]
                 # self.metamodel.eClassifiers.remove(cls)
                 # self.metamodel._current_epackage.eClassifiers.remove(cls)
@@ -382,7 +384,11 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
-                                        r._tx_class.eSuperTypes.append(cls)
+                                        tx_class = (r._tx_class.eClass
+                                                    if isinstance(r._tx_class,
+                                                                  type)
+                                                    else r._tx_class)
+                                        tx_class.eSuperTypes.append(cls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
@@ -448,11 +454,12 @@ class TextXVisitor(PTNodeVisitor):
                     else:
                         lower, upper = 0, -1
 
-                    is_ref = attr.ref and not isinstance(attr.cls, EDataType)
+                    is_ref = attr.ref and not isinstance(attr.cls, (EDataType,
+                                                                    EEnum))
                     feature_cls = EReference if is_ref else EAttribute
                     etype = EBoolean if attr.bool_assignment else attr.cls
                     feature = feature_cls(attr.name, etype, lower=lower,
-                                          upper=upper)
+                                          upper=upper, unique=False)
                     if attr.cont:
                         feature.containment = True
                     feature.position = attr.position
@@ -655,7 +662,8 @@ class TextXVisitor(PTNodeVisitor):
     def rule_is_enumeration(self, children):
         """Tries to determine if a node is actually an EEnum.
         """
-        return all(type(x) is StrMatch for x in children)
+        return (all(type(x) is StrMatch for x in children)
+                and not isinstance(self._current_cls, EEnum))
 
     def current_is_datatype(self):
         return not self._current_cls._tx_attrs

@@ -36,13 +36,15 @@ def test_children_of_type():
     metamodel = metamodel_from_str(grammar)
     model = metamodel.model_from_str(model_str)
 
-    thirds = children_of_type('Third', model)
+    # thirds = children_of_type('Third', model)
+    thirds = [x for x in model.eAllContents() if x.eClass.name == 'Third']
     assert len(thirds) == 5
     assert set(['first', 'second', 'third', 'one', 'two']) \
         == set([a.x for a in thirds])
 
     # Test search in the part of the model
-    thirds = children_of_type("Third", model.a[1])
+    # thirds = children_of_type("Third", model.a[1])
+    thirds = [x for x in model.a[1].eAllContents() if x.eClass.name == 'Third']
     assert len(thirds) == 1
     assert 'two' == list(thirds)[0].x
 

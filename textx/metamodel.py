@@ -122,6 +122,10 @@ class TextXMetaModel(EPackage, DebugPrinter):
         self.user_classes = {}
         if classes:
             for c in classes:
+                if isinstance(c, (EEnum, EDataType)):
+                    c.__name__ = c.name
+                if isinstance(c, EObject):
+                    c.ePackage = self
                 self.user_classes[c.__name__] = c
 
         self.match_filters = match_filters if match_filters else {}
@@ -420,7 +424,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
             return new_cls
 
-        def _insert_class(cls, peg_rule, position, name=None, duplicate=True,
+        def _insert_class(cls, peg_rule, position=0, name=None, duplicate=True,
                           default_value=None, **kwargs):
             new_cls = cls
             if duplicate:
@@ -433,18 +437,19 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self._init_class(new_cls, peg_rule, position, **kwargs)
             return new_cls
 
-        base_id = _insert_class(EString, ID, 0, name='ID', default_value='')
-        base_string = _insert_class(EString, STRING, 0, name='STRING',
+        base_id = _insert_class(EString, ID, name='ID', default_value='')
+        base_string = _insert_class(EString, STRING, name='STRING',
                                     default_value='')
-        base_bool = _insert_class(EBoolean, BOOL, 0, name='BOOL')
-        base_int = _insert_class(EInt, INT, 0, name='INT')
-        base_float = _insert_class(EFloat, FLOAT, 0, name='FLOAT')
-        base_number = _insert_class(EInt, NUMBER, 0, name='NUMBER',
+        base_bool = _insert_class(EBoolean, BOOL, name='BOOL')
+
+        base_int = _insert_class(EInt, INT, name='INT')
+        base_float = _insert_class(EFloat, FLOAT, name='FLOAT')
+        base_number = _insert_class(EInt, NUMBER, name='NUMBER',
                                     inherits=[base_float, base_int])
-        base_type = _insert_class(ENativeType, BASETYPE, 0, name='BASETYPE',
+        base_type = _insert_class(ENativeType, BASETYPE, name='BASETYPE',
                                   inherits=[base_number, base_bool, base_id,
                                             base_string])
-        _insert_class(ENativeType, OBJECT, 0, inherits=[base_type],
+        _insert_class(ENativeType, OBJECT, inherits=[base_type],
                       rule_type=RULE_ABSTRACT, name='OBJECT')
 
     def _init_obj_attrs(self, obj, user=False):
