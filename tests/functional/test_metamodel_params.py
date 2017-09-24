@@ -71,3 +71,4 @@ def test_autokwd():
     assert hasattr(model, 'rules')
     assert len(model.rules) == 2
     assert model.rules[1] == 'first'
+
