@@ -3,6 +3,7 @@ Testing user class constructor call and parent reference.
 """
 import pytest  # noqa
 from textx.metamodel import metamodel_from_str
+from pyecore.ecore import EMetaclass, EAttribute, EInt
 
 
 # Second objects are children of First.
@@ -49,9 +50,10 @@ def test_user_class_constructor_call():
     Tests that user class constructor gets called and
     that parent reference is given in the parameters.
     """
-
+    @EMetaclass
     class Second(object):
         _called = False
+        sec = EAttribute(eType=EInt)
 
         def __init__(self, parent, sec):
             self._called = True

@@ -6,6 +6,7 @@ from textx.metamodel import metamodel_from_str
 from textx.textx import ALL_TYPE_NAMES
 from textx.exceptions import TextXSyntaxError
 from textx.const import RULE_MATCH, RULE_ABSTRACT, RULE_COMMON
+from pyecore.ecore import ECollection, EEnumLiteral
 
 if sys.version < '3':
     text = unicode  # noqa
@@ -85,8 +86,10 @@ def test_abstract_with_match_rule():
     """
 
     grammar = """
-    Rule: STRING|Rule1|ID;
+    Rule: Rule2|Rule1|Rule3;
     Rule1: a='a'; // common rule
+    Rule2: a=STRING;
+    Rule3: a=ID;
     """
     meta = metamodel_from_str(grammar)
     assert meta['Rule']._tx_type is RULE_ABSTRACT
@@ -123,8 +126,8 @@ def test_match_rule():
 
     model = meta.model_from_str('two')
     assert model
-    assert model.__class__ == text
-    assert model == "two"
+    assert model.__class__ == EEnumLiteral
+    assert str(model) == "two"
 
 
 def test_match_rule_multiple():
@@ -427,7 +430,7 @@ def test_rule_call_forward_backward_reference():
     assert model
     assert model.attr
     assert model.attr.attr
-    assert model.attr.attr == "three"
+    assert str(model.attr.attr) == "three"
 
 
 def test_assignment_zeroormore():
@@ -477,7 +480,7 @@ def test_assignment_multiple_simple():
     assert not meta['Model']._tx_attrs['a'].ref
     assert model
     assert model.a
-    assert type(model.a) is list
+    assert isinstance(model.a, ECollection)
     assert len(model.a) == 3
     assert model.a == [34, 23, 45]
 
@@ -769,7 +772,7 @@ def test_default_attribute_values():
             first 45 "foo" 78
     """)
     assert type(model).__name__ == "First"
-    assert type(model.seconds) is list
+    assert isinstance(model.seconds, ECollection)
     assert type(model.a) is int
     assert model.a == 0
     assert type(model.b) is bool
@@ -778,9 +781,9 @@ def test_default_attribute_values():
     assert model.c == ""
     assert type(model.d) is float
     assert model.d == 0.0
-    assert type(model.e) is list
+    assert isinstance(model.e, ECollection)
     assert model.e == []
-    assert type(model.f) is list
+    assert isinstance(model.f, ECollection)
     assert model.f == []
     assert type(model.g) is bool
     assert model.g is False
@@ -828,7 +831,7 @@ def test_syntactic_predicate_not():
     Test negative lookahead using `not` syntactic predicate.
     """
     grammar = """
-    Expression: Let | MyID | NUMBER;
+    Expression: Let | MyID | RuleNumber;
     Let:
         'let'
             expr+=Expression
@@ -836,7 +839,8 @@ def test_syntactic_predicate_not():
     ;
 
     Keyword: 'let' | 'end';
-    MyID: !Keyword ID;
+    MyID: !Keyword expr=ID;
+    RuleNumber: expr=NUMBER;
     """
     meta = metamodel_from_str(grammar)
 
@@ -846,8 +850,8 @@ def test_syntactic_predicate_not():
 
     assert model
     assert len(model.expr) == 1
-    assert model.expr[0].expr[0].expr[0] == 34
-    assert model.expr[0].expr[1].expr[0] == 'foo'
+    assert model.expr[0].expr[0].expr[0].expr == 34
+    assert model.expr[0].expr[1].expr[0].expr == 'foo'
 
 
 def test_syntactic_predicate_and():

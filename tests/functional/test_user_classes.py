@@ -1,5 +1,7 @@
 import pytest  # noqa
 from textx.metamodel import metamodel_from_str
+from pyecore.ecore import EMetaclass, EAttribute, EString, EBoolean, EInt, \
+                            ECollection
 
 grammar = """
 First:
@@ -20,8 +22,13 @@ def test_user_class():
     """
     User supplied meta class.
     """
+    @EMetaclass
     class First(object):
         "User class."
+        a = EAttribute(eType=EInt, upper=-1)
+        b = EAttribute(eType=EBoolean)
+        c = EAttribute(eType=EString)
+
         def __init__(self, seconds, a, b, c):
             "Constructor must be without parameters."
             # Testing that additional attributes
@@ -48,7 +55,7 @@ def test_user_class():
     assert type(model).__name__ == "First"
     assert type(model) is First
     # Check default attributes
-    assert type(model.a) is list
+    assert isinstance(model.a, ECollection)
     assert model.a == []
     assert type(model.b) is bool
     assert model.b is False

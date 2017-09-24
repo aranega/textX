@@ -60,6 +60,8 @@ def test_match_filter_sequence_match_rule():
     assert type(m.i) is int
 
 
+@pytest.mark.skip(reason="In PyEcore, typing is performed at runtime. Thus "
+                  "a float cannot be stored in an INT.")
 def test_base_filter_override():
     grammar = """
     First:
