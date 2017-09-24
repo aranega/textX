@@ -90,9 +90,6 @@ And.op = EReference('op', Not, upper=-1)
 class Operand(ExpressionElement):
     op = EAttribute(eType=ENativeType)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     @property
     def value(self):
         op = self.op
