@@ -310,6 +310,7 @@ class TextXVisitor(PTNodeVisitor):
             # Abstract are root rules which haven't got any attributes
             # and reference at least one non-match rule.
             abstract = False
+            match = False
             if rule.rule_name and cls.__name__ != rule.rule_name:
                 # Special case. Body of the rule is a single rule
                 # reference and the referenced rule is not match rule.
@@ -374,7 +375,7 @@ class TextXVisitor(PTNodeVisitor):
                     if rule._tx_class not in cls._tx_inh_by:
                         cls._tx_inh_by.append(rule._tx_class)
                         if not match:
-                            cls.eSuperTypes.append(rule._tx_class)
+                            rule._tx_class.eSuperTypes.append(cls)
                 else:
                     # Recursivelly append all referenced classes.
                     def _add_reffered_classes(rule, inh_by):

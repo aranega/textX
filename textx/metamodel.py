@@ -438,6 +438,8 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self._init_class(new_cls, peg_rule, position, **kwargs)
             return new_cls
 
+        from numbers import Number
+        ENumber = EDataType('ENumber', Number)
         base_id = _insert_class(EString, ID, name='ID', default_value='')
         base_string = _insert_class(EString, STRING, name='STRING',
                                     default_value='')
@@ -445,7 +447,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         base_int = _insert_class(EInt, INT, name='INT')
         base_float = _insert_class(EFloat, FLOAT, name='FLOAT')
-        base_number = _insert_class(EInt, NUMBER, name='NUMBER',
+        base_number = _insert_class(ENumber, NUMBER, name='NUMBER',
                                     inherits=[base_float, base_int])
         base_type = _insert_class(ENativeType, BASETYPE, name='BASETYPE',
                                   inherits=[base_number, base_bool, base_id,

@@ -226,9 +226,6 @@ def parse_tree_to_objgraph(parser, parse_tree):
         """
         Process subtree for match rules.
         """
-        cls = None
-        if nt.rule_name:
-            cls = metamodel[nt.rule_name]
         if isinstance(nt, Terminal):
             return metamodel.convert(nt.value, nt.rule_name)
         else:
@@ -240,8 +237,10 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     nt.rule_name)
             else:
                 value = process_match(nt[0])
-                if type(cls) is EEnum:
-                    value = cls.getEEnumLiteral(value)
+                if nt.rule_name:
+                    cls = metamodel[nt.rule_name]
+                    if type(cls) is EEnum:
+                        value = cls.getEEnumLiteral(value)
                 return value
 
     def process_node(node):
