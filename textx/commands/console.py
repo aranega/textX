@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import argparse
+from pyecoregen.ecore import EcoreGenerator
 from textx.metamodel import metamodel_from_file
 from textx.export import metamodel_export, model_export
 from textx.exceptions import TextXError
@@ -22,19 +23,24 @@ def textx():
             sys.exit(2)
 
     parser = MyParser(description='textX checker and visualizer')
-    parser.add_argument('cmd', help='Command - "check" or "visualize"')
+    parser.add_argument('cmd', help='Command - "check", "visualize" '
+                                    'or "generate"')
     parser.add_argument('metamodel', help='Meta-model file name')
     parser.add_argument('model', help='Model file name', nargs='?')
     parser.add_argument('-i', help='case-insensitive parsing',
                         action='store_true')
     parser.add_argument('-d', help='run in debug mode',
                         action='store_true')
+    parser.add_argument('--out-folder', '-o',
+                        help='output folder for metamodel generation. Default'
+                             ' value is "."',
+                        default='.')
 
     args = parser.parse_args()
 
-    if args.cmd not in ['visualize', 'check']:
+    if args.cmd not in ['visualize', 'check', 'generate']:
         print("Unknown command {}. Command must be one of"
-              " 'visualize', 'check'.".format(args.cmd))
+              " 'visualize', 'check', 'generate'.".format(args.cmd))
         sys.exit(1)
 
     try:
@@ -64,3 +70,18 @@ def textx():
             print("Generating '%s.dot' file for model." % args.model)
             print("To convert to png run 'dot -Tpng -O %s.dot'" % args.model)
             model_export(model, "%s.dot" % args.model)
+    elif args.cmd == "generate":
+        dest = args.out_folder
+        generator = EcoreGenerator()
+        # Iterate on each resources from the metamodel resource set in case
+        # the grammar references other ones (i.e: the meta-model references
+        # other ones).
+        for resource in metamodel.resource_set.resources.values():
+            package = resource.contents[0]
+            print("Generating '%s' PyEcore package for "
+                  "meta-model in folder '%s'." % (package.name, dest))
+            generator.generate(package, dest)
+
+
+if __name__ == '__main__':
+    textx()
