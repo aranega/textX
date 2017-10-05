@@ -150,7 +150,9 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             # { id(class): { obj.name: obj}}
             self._instances = {}
 
-            self.crossrefs = []
+            # List to keep track of all cross-ref that need to be resolved
+            # Contained elements are tuples: (instance, metaattr, cross-ref)
+            self._crossrefs = []
 
         def _parse(self):
             try:
@@ -177,8 +179,6 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             except AttributeError:
                 # model is some primitive python type (e.g. str)
                 pass
-            self.crossrefs.clear()
-            self._inst_stack.clear()
             return model
 
         def get_model_from_str(self, model_str, file_name=None, debug=None):
@@ -208,7 +208,6 @@ def get_model_parser(top_rule, comments_model, **kwargs):
             except AttributeError:
                 # model is some primitive python type (e.g. str)
                 pass
-            self.crossrefs.clear()
             return model
 
     return TextXModelParser(**kwargs)
@@ -390,7 +389,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     # If this is non-containing reference create ObjCrossRef
                     value = ObjCrossRef(obj_name=value, cls=metaattr.cls,
                                         position=node[0].position)
-                    parser.crossrefs.append((model_obj, metaattr, value))
+                    parser._crossrefs.append((model_obj, metaattr, value))
                     return model_obj
 
                 if isinstance(attr_value, ECollection):
@@ -412,8 +411,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
                             value = ObjCrossRef(obj_name=value,
                                                 cls=metaattr.cls,
                                                 position=node[0].position)
-                            parser.crossrefs.append((obj_attr, metaattr,
-                                                     value))
+                            parser._crossrefs.append((obj_attr, metaattr,
+                                                      value))
                             continue
 
                         if not hasattr(obj_attr, txa_attr_name) or \
@@ -480,18 +479,15 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 .format(obj_ref.obj_name, obj_ref.cls.__name__, (line, col)),
                 line=line, col=col)
 
-        def _resolve_obj_attributes(o):
-
-            # If this object has attributes (created using a common rule)
-            for obj, attr, crossref in parser.crossrefs:
-                attr_value = getattr(obj, attr.name)
-                if attr.mult in [MULT_ONEORMORE, MULT_ZEROORMORE]:
-                    attr_value.append(_resolve_link_rule_ref(crossref))
-                else:
-                    setattr(obj, attr.name, _resolve_link_rule_ref(crossref))
-
-
-        _resolve_obj_attributes(model)
+        # If this object has attributes (created using a common rule)
+        for obj, attr, crossref in parser._crossrefs:
+            attr_value = getattr(obj, attr.name)
+            resolved = _resolve_link_rule_ref(crossref)
+            if attr.mult in [MULT_ONEORMORE, MULT_ZEROORMORE]:
+                attr_value.append(resolved)
+            else:
+                setattr(obj, attr.name, resolved)
+        del parser._crossrefs[:]
 
     def call_obj_processors(model_obj):
         """
