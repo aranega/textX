@@ -14,7 +14,7 @@ import glob
 import imp
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
-textx.PYECORE_SUPPORT = True  # noqa
+textx.enable_pyecore_support()  # noqa
 
 
 def test_examples():
