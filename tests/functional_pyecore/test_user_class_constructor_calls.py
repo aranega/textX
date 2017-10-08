@@ -2,6 +2,9 @@
 Testing user class constructor call and parent reference.
 """
 import pytest  # noqa
+pyecore = pytest.importorskip("pyecore")  # noqa
+import textx
+textx.PYECORE_SUPPORT = True  # noqa
 from textx.metamodel import metamodel_from_str
 from pyecore.ecore import EMetaclass, EAttribute, EInt
 

@@ -2,6 +2,9 @@
 from __future__ import unicode_literals
 
 import pytest  # noqa
+pyecore = pytest.importorskip("pyecore")  # noqa
+import textx
+textx.PYECORE_SUPPORT = True  # noqa
 from textx.metamodel import metamodel_from_str
 
 

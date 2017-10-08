@@ -12,6 +12,9 @@ import os
 import sys
 import glob
 import imp
+pyecore = pytest.importorskip("pyecore")  # noqa
+import textx
+textx.PYECORE_SUPPORT = True  # noqa
 
 
 def test_examples():

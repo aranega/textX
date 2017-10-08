@@ -1,4 +1,7 @@
 import pytest
+pyecore = pytest.importorskip("pyecore")  # noqa
+import textx
+textx.PYECORE_SUPPORT = True  # noqa
 from textx.metamodel import metamodel_from_str
 from textx.exceptions import TextXSyntaxError
 
@@ -71,4 +74,3 @@ def test_autokwd():
     assert hasattr(model, 'rules')
     assert len(model.rules) == 2
     assert model.rules[1] == 'first'
-
