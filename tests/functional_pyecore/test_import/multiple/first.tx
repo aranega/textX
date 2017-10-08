@@ -1,0 +1,11 @@
+import second
+import relative.third
+
+First:
+  'first' seconds+=Second
+  'third' thirds+=Third
+;
+
+Third:
+  t=STRING
+;

@@ -1,0 +1,9 @@
+import second
+import relative.third
+
+First:
+  'first'
+    'second' second+=Second     // Second is defined in imported grammar
+    'third' third+=Third      // For testing relative importing
+  'endfirst'
+;
