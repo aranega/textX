@@ -18,9 +18,9 @@ from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
     RULE_ABSTRACT
-from . import PYECORE_SUPPORT
+import textx
 
-if PYECORE_SUPPORT:
+if textx.PYECORE_SUPPORT:
     from pyecore.ecore import EObject, EClass, EPackage, EDataType, EEnum, \
         EString, EBoolean, EInt, EFloat, ENativeType
 
@@ -64,7 +64,7 @@ class MetaAttr(object):
 
 
 def __TextXMetaModel_bases():
-    if PYECORE_SUPPORT:
+    if textx.PYECORE_SUPPORT:
         return (EPackage, DebugPrinter)
     else:
         return (DebugPrinter,)
@@ -134,7 +134,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
         self.user_classes = {}
         if classes:
             for c in classes:
-                if PYECORE_SUPPORT:
+                if textx.PYECORE_SUPPORT:
                     if isinstance(c, (EEnum, EDataType)):
                         c.__name__ = c.name
                     if isinstance(c, EObject):
@@ -161,7 +161,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
         self._namespace_stack = []
 
         # Pyecore EPackage stack for namespaces and resource set
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             self._epackage_stack = [self]
             self.resource_set = resource_set if resource_set else ResourceSet()
 
@@ -173,7 +173,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
 
         # Base types hierarchy should exist in each meta-model
         # Registration is conditional (either the original or the ecore ones)
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             self._register_ecore_datatypes()
         else:
             base_id = self._new_class('ID', ID, 0)
@@ -200,7 +200,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
         # used.
         self.root_path = os.path.dirname(file_name) if file_name else None
 
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             # Get main namespace
             namespace = self._namespace_for_file_name(file_name)
             default_name = 'default'
@@ -241,7 +241,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
 
         self._namespace_stack.append(namespace_name)
 
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             uri = 'http://{}/'.format(namespace_name)
             if uri in self.resource_set.resources:
                 resource = self.resource_set.get_resource(uri)
@@ -262,7 +262,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
         """
         Leaves current namespace (i.e. grammar file).
         """
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             self._epackage_stack.pop()
         self._namespace_stack.pop()
 
@@ -324,7 +324,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
                                                        id(cls))
 
         @add_metaclass(TextXMetaClass)
-        class TextXClass(EClass if PYECORE_SUPPORT else object):
+        class TextXClass(EClass if textx.PYECORE_SUPPORT else object):
             """
             Dynamicaly created class. Each textX rule will result in
             creating one Python class with the type name of the rule.
@@ -358,7 +358,7 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
                     return "<textx:{} instance at {}>"\
                         .format(self._tx_fqn, hex(id(self)))
 
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             if kind and eType:
                 cls = kind(name, eType=eType)
             elif kind:

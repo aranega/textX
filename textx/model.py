@@ -15,9 +15,9 @@ from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, MULT_ZEROORMORE, \
     RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
 from .textx import PRIMITIVE_PYTHON_TYPES
-from . import PYECORE_SUPPORT
+import textx
 
-if PYECORE_SUPPORT:
+if textx.PYECORE_SUPPORT:
     from pyecore.ecore import EClass, EEnum, EEnumLiteral, ECollection
 
 if sys.version < '3':
@@ -240,7 +240,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     nt.rule_name)
             else:
                 value = process_match(nt[0])
-                if PYECORE_SUPPORT:
+                if textx.PYECORE_SUPPORT:
                     if nt.rule_name:
                         cls = metamodel[nt.rule_name]
                         if type(cls) is EEnum:
@@ -248,12 +248,12 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 return value
 
     def __is_collection(col):
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             return isinstance(col, ECollection)
         return type(col) is list
 
     def __is_collection_or_enum(col):
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             return isinstance(col, (ECollection, EEnumLiteral))
         return type(col) is list
 
@@ -292,7 +292,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 # Object initialization will be done afterwards
                 # At this point we need object to be allocated
                 # So that nested object get correct reference
-                if PYECORE_SUPPORT:
+                if textx.PYECORE_SUPPORT:
                     if isinstance(user_class, EClass):
                         inst = user_class()
                     else:
@@ -304,7 +304,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
             else:
                 # Generic class will call attributes init
                 # from the constructor
-                if PYECORE_SUPPORT:
+                if textx.PYECORE_SUPPORT:
                     inst = mclass()
                 else:
                     inst = mclass.__new__(mclass)
@@ -345,7 +345,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     if hasattr(obj_attrs, '_txa_parent'):
                         attrs['parent'] = obj_attrs._txa_parent
                         del obj_attrs._txa_parent
-                    if PYECORE_SUPPORT:
+                    if textx.PYECORE_SUPPORT:
                         for a in obj_attrs.eClass.eAllStructuralFeatures():
                             attrs[a.name] = getattr(obj_attrs, a.name)
                             # delattr(obj_attrs, a.name)
@@ -378,14 +378,14 @@ def parse_tree_to_objgraph(parser, parse_tree):
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
             cls = type(model_obj)
-            if PYECORE_SUPPORT:
+            if textx.PYECORE_SUPPORT:
                 cls = cls.eClass if not hasattr(cls, '_tx_attrs') else cls
             metaattr = cls._tx_attrs[attr_name]
 
             # Mangle attribute name to prevent name clashing with property
             # setters on user classes
             if cls.__name__ in metamodel.user_classes:
-                if PYECORE_SUPPORT:
+                if textx.PYECORE_SUPPORT:
                     txa_attr_name = attr_name
                 else:
                     txa_attr_name = "_txa_%s" % attr_name
@@ -481,7 +481,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                         if result:
                             return result
                 elif cls._tx_type == RULE_COMMON:
-                    if PYECORE_SUPPORT:
+                    if textx.PYECORE_SUPPORT:
                         cls = (cls.python_class if isinstance(cls, EClass)
                                else cls)
                     if id(cls) in parser._instances:
@@ -521,7 +521,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
         Depth-first model object processing.
         """
 
-        if PYECORE_SUPPORT:
+        if textx.PYECORE_SUPPORT:
             metaclass = model_obj.eClass
         else:
             metaclass = type(model_obj)
