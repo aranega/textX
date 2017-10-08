@@ -11,8 +11,6 @@ import codecs
 import os
 from collections import OrderedDict
 from arpeggio import DebugPrinter
-import pyecore.ecore as ecore
-from pyecore.resources import ResourceSet, Resource, URI
 from textx.six import add_metaclass
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
@@ -23,7 +21,8 @@ import textx
 if textx.PYECORE_SUPPORT:
     from pyecore.ecore import EObject, EClass, EPackage, EDataType, EEnum, \
         EString, EBoolean, EInt, EFloat, ENativeType
-
+    import pyecore.ecore as ecore
+    from pyecore.resources import ResourceSet, Resource, URI
 
 __all__ = ['metamodel_from_str', 'metamodel_from_file']
 
