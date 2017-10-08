@@ -1,5 +1,8 @@
 import pytest  # noqa
 import os
+pyecore = pytest.importorskip("pyecore")  # noqa
+import textx
+textx.enable_pyecore_support()  # noqa
 from textx.metamodel import metamodel_from_str, metamodel_from_file
 
 grammar = """
