@@ -223,7 +223,7 @@ class TextXVisitor(PTNodeVisitor):
         self._resolve_cls_refs(self.grammar_parser, model_parser)
 
         if PYECORE_SUPPORT:
-            del self._potential_datatypes[:]
+            self._potential_datatypes.clear()
 
         return model_parser
 

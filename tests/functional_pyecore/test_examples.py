@@ -17,7 +17,7 @@ import imp
 def test_examples():
 
     examples_pat = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                '../../examples/*/*.py')
+                                '../../examples_pyecore/*/*.py')
 
     # Filter out __init__.py
     examples = [f for f in glob.glob(examples_pat) if f != '__init__.py']

@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import pytest  # noqa
+import textx
+textx.PYECORE_SUPPORT = True
+
 from textx.metamodel import metamodel_from_str
+
+
 
 grammar = """
 First:
@@ -70,4 +75,3 @@ def test_no_auto_init():
     # because there cannot be three state.
     # Either string to match exists or not.
     assert model.d is False
-

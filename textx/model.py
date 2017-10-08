@@ -377,10 +377,9 @@ def parse_tree_to_objgraph(parser, parse_tree):
             attr_name = node.rule._attr_name
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
+            cls = type(model_obj)
             if PYECORE_SUPPORT:
                 cls = cls.eClass if not hasattr(cls, '_tx_attrs') else cls
-            else:
-                cls = type(model_obj)
             metaattr = cls._tx_attrs[attr_name]
 
             # Mangle attribute name to prevent name clashing with property

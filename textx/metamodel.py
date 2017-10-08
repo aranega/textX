@@ -361,8 +361,10 @@ class TextXMetaModel(*__TextXMetaModel_bases()):
         if PYECORE_SUPPORT:
             if kind and eType:
                 cls = kind(name, eType=eType)
-            else:
+            elif kind:
                 cls = kind(name)
+            else:
+                cls = TextXClass(name)
             # Add the new type to the current EPackage
             cls.ePackage = self._epackage_stack[-1]
         else:
