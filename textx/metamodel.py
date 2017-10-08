@@ -12,13 +12,17 @@ import os
 from collections import OrderedDict
 from arpeggio import DebugPrinter
 import pyecore.ecore as ecore
-from pyecore.ecore import *
 from pyecore.resources import ResourceSet, Resource, URI
 from textx.six import add_metaclass
 from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
     INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
     RULE_ABSTRACT
+from . import PYECORE_SUPPORT
+
+if PYECORE_SUPPORT:
+    from pyecore.ecore import EObject, EClass, EPackage, EDataType, EEnum, \
+        EString, EBoolean, EInt, EFloat, ENativeType
 
 
 __all__ = ['metamodel_from_str', 'metamodel_from_file']
@@ -59,7 +63,14 @@ class MetaAttr(object):
         self.position = position
 
 
-class TextXMetaModel(EPackage, DebugPrinter):
+def __TextXMetaModel_bases():
+    if PYECORE_SUPPORT:
+        return (EPackage, DebugPrinter)
+    else:
+        return (DebugPrinter,)
+
+
+class TextXMetaModel(*__TextXMetaModel_bases()):
     """
     Meta-model contains all information about language abstract syntax.
     Furthermore, this class is in charge for model instantiation and new
@@ -123,10 +134,11 @@ class TextXMetaModel(EPackage, DebugPrinter):
         self.user_classes = {}
         if classes:
             for c in classes:
-                if isinstance(c, (EEnum, EDataType)):
-                    c.__name__ = c.name
-                if isinstance(c, EObject):
-                    c.ePackage = self
+                if PYECORE_SUPPORT:
+                    if isinstance(c, (EEnum, EDataType)):
+                        c.__name__ = c.name
+                    if isinstance(c, EObject):
+                        c.ePackage = self
                 self.user_classes[c.__name__] = c
 
         self.match_filters = match_filters if match_filters else {}
@@ -147,8 +159,11 @@ class TextXMetaModel(EPackage, DebugPrinter):
         # Namespaces
         self.namespaces = {}
         self._namespace_stack = []
-        self._epackage_stack = [self]
-        self.resource_set = resource_set if resource_set else ResourceSet()
+
+        # Pyecore EPackage stack for namespaces and resource set
+        if PYECORE_SUPPORT:
+            self._epackage_stack = [self]
+            self.resource_set = resource_set if resource_set else ResourceSet()
 
         # Imported namespaces
         self._imported_namespaces = {}
@@ -158,7 +173,9 @@ class TextXMetaModel(EPackage, DebugPrinter):
 
         # Base types hierarchy should exist in each meta-model
         # Registration is conditional (either the original or the ecore ones)
-        if False:
+        if PYECORE_SUPPORT:
+            self._register_ecore_datatypes()
+        else:
             base_id = self._new_class('ID', ID, 0)
             base_string = self._new_class('STRING', STRING, 0)
             base_bool = self._new_class('BOOL', BOOL, 0)
@@ -171,8 +188,6 @@ class TextXMetaModel(EPackage, DebugPrinter):
                                                   base_id, base_string])
             self._new_class('OBJECT', OBJECT, 0, inherits=[base_type],
                             rule_type=RULE_ABSTRACT)
-        else:
-            self._register_ecore_datatypes()
 
         self._leave_namespace()
 
@@ -185,18 +200,19 @@ class TextXMetaModel(EPackage, DebugPrinter):
         # used.
         self.root_path = os.path.dirname(file_name) if file_name else None
 
-        # Get main namespace
-        namespace = self._namespace_for_file_name(file_name)
-        default_name = 'default'
-        if not self.nsURI:
-            self.nsURI = ('http://{}/'.format(namespace) if namespace
-                          else default_name)
-        if not self.nsPrefix:
-            self.nsPrefix = namespace if namespace else default_name
-        if not self.name:
-            self.name = namespace if namespace else default_name
-        resource = self.resource_set.create_resource(self.nsURI)
-        resource.append(self)
+        if PYECORE_SUPPORT:
+            # Get main namespace
+            namespace = self._namespace_for_file_name(file_name)
+            default_name = 'default'
+            if not self.nsURI:
+                self.nsURI = ('http://{}/'.format(namespace) if namespace
+                              else default_name)
+            if not self.nsPrefix:
+                self.nsPrefix = namespace if namespace else default_name
+            if not self.name:
+                self.name = namespace if namespace else default_name
+            resource = self.resource_set.create_resource(self.nsURI)
+            resource.append(self)
 
         # Enter namespace for given file or None if metamodel is
         # constructed from string.
@@ -223,28 +239,31 @@ class TextXMetaModel(EPackage, DebugPrinter):
             self._imported_namespaces[namespace_name] = \
                 [self.namespaces['__base__']]
 
-        uri = 'http://{}/'.format(namespace_name)
-        if uri in self.resource_set.resources:
-            resource = self.resource_set.get_resource(uri)
-            epackage = resource.contents[0]
-        elif namespace_name and namespace_name != '__base__':
-            name = namespace_name.split('.', 1)[-1]
-            resource = self.resource_set.create_resource(uri)
-            epackage = EPackage(name=name, nsURI=uri,
-                                nsPrefix=namespace_name)
-            resource.contents.append(epackage)
-        elif namespace_name == '__base__':
-            epackage = ecore.eClass
-        else:
-            epackage = self
-        self._epackage_stack.append(epackage)
         self._namespace_stack.append(namespace_name)
+
+        if PYECORE_SUPPORT:
+            uri = 'http://{}/'.format(namespace_name)
+            if uri in self.resource_set.resources:
+                resource = self.resource_set.get_resource(uri)
+                epackage = resource.contents[0]
+            elif namespace_name and namespace_name != '__base__':
+                name = namespace_name.split('.', 1)[-1]
+                resource = self.resource_set.create_resource(uri)
+                epackage = EPackage(name=name, nsURI=uri,
+                                    nsPrefix=namespace_name)
+                resource.contents.append(epackage)
+            elif namespace_name == '__base__':
+                epackage = ecore.eClass
+            else:
+                epackage = self
+            self._epackage_stack.append(epackage)
 
     def _leave_namespace(self):
         """
         Leaves current namespace (i.e. grammar file).
         """
-        self._epackage_stack.pop()
+        if PYECORE_SUPPORT:
+            self._epackage_stack.pop()
         self._namespace_stack.pop()
 
     def _new_import(self, import_name):
@@ -305,7 +324,7 @@ class TextXMetaModel(EPackage, DebugPrinter):
                                                        id(cls))
 
         @add_metaclass(TextXMetaClass)
-        class TextXClass(EClass):
+        class TextXClass(EClass if PYECORE_SUPPORT else object):
             """
             Dynamicaly created class. Each textX rule will result in
             creating one Python class with the type name of the rule.
@@ -339,17 +358,16 @@ class TextXMetaModel(EPackage, DebugPrinter):
                     return "<textx:{} instance at {}>"\
                         .format(self._tx_fqn, hex(id(self)))
 
-        if kind and eType:
-            cls = kind(name, eType=eType)
-        elif kind:
-            cls = kind(name)
+        if PYECORE_SUPPORT:
+            if kind and eType:
+                cls = kind(name, eType=eType)
+            else:
+                cls = kind(name)
+            # Add the new type to the current EPackage
+            cls.ePackage = self._epackage_stack[-1]
         else:
-            cls = TextXClass(name)
-        if not hasattr(cls, '__name__'):
-            cls.__name__ = name
-
-        # Add the new type to the current EPackage
-        cls.ePackage = self._epackage_stack[-1]
+            cls = TextXClass
+        cls.__name__ = name
 
         self._init_class(cls, peg_rule, position, position_end, inherits, root,
                          rule_type)

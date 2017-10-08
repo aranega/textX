@@ -11,6 +11,7 @@
 #######################################################################
 
 from __future__ import unicode_literals
+import sys
 import re
 from arpeggio import StrMatch, Optional, ZeroOrMore, OneOrMore, Sequence,\
     OrderedChoice, UnorderedGroup, Not, And, RegExMatch, Match, NoMatch, EOF, \
@@ -18,12 +19,15 @@ from arpeggio import StrMatch, Optional, ZeroOrMore, OneOrMore, Sequence,\
     Repetition
 from arpeggio.export import PMDOTExporter
 from arpeggio import RegExMatch as _
-from pyecore.ecore import *
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, \
     MULT_OPTIONAL, RULE_COMMON, RULE_MATCH, RULE_ABSTRACT, mult_lt
+from . import PYECORE_SUPPORT
 
-import sys
+if PYECORE_SUPPORT:
+    from pyecore.ecore import EAttribute, EReference, EDataType, EEnum, \
+        EEnumLiteral, EBoolean
+
 if sys.version < '3':
     text = unicode  # noqa
 else:
@@ -182,7 +186,8 @@ class TextXVisitor(PTNodeVisitor):
             flags = re.IGNORECASE
         self.keyword_regex = re.compile(r'[^\d\W]\w*', flags)
 
-        self._potential_datatypes = {}
+        if PYECORE_SUPPORT:
+            self._potential_datatypes = {}
 
         super(TextXVisitor, self).__init__()
 
@@ -217,7 +222,8 @@ class TextXVisitor(PTNodeVisitor):
         self._determine_rule_types(model_parser.metamodel)
         self._resolve_cls_refs(self.grammar_parser, model_parser)
 
-        self._potential_datatypes.clear()
+        if PYECORE_SUPPORT:
+            del self._potential_datatypes[:]
 
         return model_parser
 
@@ -331,37 +337,37 @@ class TextXVisitor(PTNodeVisitor):
                         if result:
                             return True
                 abstract = _has_nonmatch_ref(rule)
+                if PYECORE_SUPPORT:
+                    # TODO rewrite this and mix it with the previous closure
+                    def _has_match_ref(rule):
+                        for r in rule.nodes:
+                            if r.root:
+                                _determine_rule_type(r._tx_class)
+                                result = r._tx_class._tx_type == RULE_MATCH
+                            else:
+                                result = _has_match_ref(r)
+                            if result:
+                                return True
+                    match = _has_match_ref(rule)
 
-                # TODO rewrite this and mix it with the previous closure
-                def _has_match_ref(rule):
-                    for r in rule.nodes:
-                        if r.root:
-                            _determine_rule_type(r._tx_class)
-                            result = r._tx_class._tx_type == RULE_MATCH
-                        else:
-                            result = _has_match_ref(r)
-                        if result:
-                            return True
-                match = _has_match_ref(rule)
-
-            def change_to_datatype(cls, rule):
-                if isinstance(cls, EDataType):
-                    return
-                datatype_type = self._potential_datatypes[cls]
-                # self.metamodel.eClassifiers.remove(cls)
-                # self.metamodel._current_epackage.eClassifiers.remove(cls)
-                cls.ePackage = None
-                cls = self.metamodel \
-                          ._new_class(cls.name, rule,
-                                      cls._tx_position,
-                                      inherits=cls._tx_inh_by,
-                                      rule_type=cls._tx_type,
-                                      kind=EDataType,
-                                      eType=datatype_type)
-                self._current_cls = cls
+            # def change_to_datatype(cls, rule):
+            #     if isinstance(cls, EDataType):
+            #         return
+            #     datatype_type = self._potential_datatypes[cls]
+            #     # self.metamodel.eClassifiers.remove(cls)
+            #     # self.metamodel._current_epackage.eClassifiers.remove(cls)
+            #     cls.ePackage = None
+            #     cls = self.metamodel \
+            #               ._new_class(cls.name, rule,
+            #                           cls._tx_position,
+            #                           inherits=cls._tx_inh_by,
+            #                           rule_type=cls._tx_type,
+            #                           kind=EDataType,
+            #                           eType=datatype_type)
+            #     self._current_cls = cls
 
             if abstract:
-                if match:
+                if PYECORE_SUPPORT and match:
                     line, col = (self.grammar_parser
                                  .pos_to_linecol(cls._tx_position))
                     raise TextXSemanticError(
@@ -369,12 +375,13 @@ class TextXVisitor(PTNodeVisitor):
                         'position {}.'
                         .format(rule.rule_name, (line, col)), line, col)
                 cls._tx_type = RULE_ABSTRACT
-                cls.abstract = True
+                if PYECORE_SUPPORT:
+                    cls.abstract = True
                 # Add inherited classes to this rule's meta-class
                 if rule.rule_name and cls.__name__ != rule.rule_name:
                     if rule._tx_class not in cls._tx_inh_by:
                         cls._tx_inh_by.append(rule._tx_class)
-                        if not match:
+                        if PYECORE_SUPPORT and not match:
                             rule._tx_class.eSuperTypes.append(cls)
                 else:
                     # Recursivelly append all referenced classes.
@@ -386,19 +393,28 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
-                                        tx_class = (r._tx_class.eClass
-                                                    if isinstance(r._tx_class,
-                                                                  type)
-                                                    else r._tx_class)
-                                        tx_class.eSuperTypes.append(cls)
+                                        if PYECORE_SUPPORT:
+                                            is_type = isinstance(r._tx_class,
+                                                                 type)
+                                            tx_class = (r._tx_class.eClass
+                                                        if is_type
+                                                        else r._tx_class)
+                                            tx_class.eSuperTypes.append(cls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
-                # if match:
-                #     change_to_datatype(cls, rule)
 
-            elif cls in self._potential_datatypes:
-                change_to_datatype(cls, rule)
+            elif PYECORE_SUPPORT and cls in self._potential_datatypes and \
+                    not isinstance(cls, EDataType):
+                datatype_type = self._potential_datatypes[cls]
+                cls.ePackage = None
+                cls = self.metamodel._new_class(cls.name, rule,
+                                                cls._tx_position,
+                                                inherits=cls._tx_inh_by,
+                                                rule_type=cls._tx_type,
+                                                kind=EDataType,
+                                                eType=datatype_type)
+                self._current_cls = cls
 
         resolved_classes = set()
         for cls in metamodel:
@@ -447,27 +463,29 @@ class TextXVisitor(PTNodeVisitor):
                     else:
                         attr.ref = True
 
-                    if attr.mult == MULT_ONE:
-                        lower, upper = 1, 1
-                    elif attr.mult == MULT_ONEORMORE:
-                        lower, upper = 1, -1
-                    elif attr.mult == MULT_OPTIONAL:
-                        lower, upper = 0, 1
-                    else:
-                        lower, upper = 0, -1
+                    if PYECORE_SUPPORT:
+                        if attr.mult == MULT_ONE:
+                            lower, upper = 1, 1
+                        elif attr.mult == MULT_ONEORMORE:
+                            lower, upper = 1, -1
+                        elif attr.mult == MULT_OPTIONAL:
+                            lower, upper = 0, 1
+                        else:
+                            lower, upper = 0, -1
 
-                    is_ref = attr.ref and not isinstance(attr.cls, (EDataType,
-                                                                    EEnum))
-                    feature_cls = EReference if is_ref else EAttribute
-                    etype = EBoolean if attr.bool_assignment else attr.cls
-                    feature = feature_cls(attr.name, etype, lower=lower,
-                                          upper=upper, unique=False)
-                    if attr.cont:
-                        feature.containment = True
-                    feature.position = attr.position
-                    tmp = cls.eClass if isinstance(cls, type) else cls
-                    if tmp.findEStructuralFeature(attr.name) is None:
-                        tmp.eStructuralFeatures.append(feature)
+                        is_ref = attr.ref and not isinstance(attr.cls,
+                                                             (EDataType,
+                                                              EEnum))
+                        feature_cls = EReference if is_ref else EAttribute
+                        etype = EBoolean if attr.bool_assignment else attr.cls
+                        feature = feature_cls(attr.name, etype, lower=lower,
+                                              upper=upper, unique=False)
+                        if attr.cont:
+                            feature.containment = True
+                        feature.position = attr.position
+                        tmp = cls.eClass if isinstance(cls, type) else cls
+                        if tmp.findEStructuralFeature(attr.name) is None:
+                            tmp.eStructuralFeatures.append(feature)
 
                     if grammar_parser.debug:
                         grammar_parser.dprint(
@@ -645,18 +663,19 @@ class TextXVisitor(PTNodeVisitor):
         return RuleCrossRef(rule_name, rule_name, node.position)
 
     def visit_textx_rule_body(self, node, children):
-        if self.rule_is_enumeration(children):
-            current_cls = self._current_cls
-            self.metamodel.eClassifiers.remove(current_cls)
-            cls = self.metamodel._new_class(current_cls.name, None,
-                                            current_cls._tx_position,
-                                            kind=EEnum)
-            self._current_cls = cls
-            for i, literal in enumerate(children):
-                cls.eLiterals.append(EEnumLiteral(i, str(literal)))
-        elif self.current_is_datatype():
-            self._potential_datatypes[self._current_cls] = \
-                                              self.compute_etype(children)
+        if PYECORE_SUPPORT:
+            if self.rule_is_enumeration(children):
+                current_cls = self._current_cls
+                self.metamodel.eClassifiers.remove(current_cls)
+                cls = self.metamodel._new_class(current_cls.name, None,
+                                                current_cls._tx_position,
+                                                kind=EEnum)
+                self._current_cls = cls
+                for i, literal in enumerate(children):
+                    cls.eLiterals.append(EEnumLiteral(i, str(literal)))
+            elif self.current_is_datatype():
+                self._potential_datatypes[self._current_cls] = \
+                                                  self.compute_etype(children)
         if len(children) == 1:
             return children[0]
         return OrderedChoice(nodes=children[:])

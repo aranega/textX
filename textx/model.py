@@ -11,11 +11,15 @@ import sys
 import codecs
 import traceback
 from arpeggio import Parser, Sequence, NoMatch, EOF, Terminal
-from pyecore.ecore import *
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, MULT_ZEROORMORE, \
     RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
 from .textx import PRIMITIVE_PYTHON_TYPES
+from . import PYECORE_SUPPORT
+
+if PYECORE_SUPPORT:
+    from pyecore.ecore import EClass, EEnum, EEnumLiteral, ECollection
+
 if sys.version < '3':
     text = unicode  # noqa
 else:
@@ -236,11 +240,22 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     nt.rule_name)
             else:
                 value = process_match(nt[0])
-                if nt.rule_name:
-                    cls = metamodel[nt.rule_name]
-                    if type(cls) is EEnum:
-                        value = cls.getEEnumLiteral(value)
+                if PYECORE_SUPPORT:
+                    if nt.rule_name:
+                        cls = metamodel[nt.rule_name]
+                        if type(cls) is EEnum:
+                            value = cls.getEEnumLiteral(value)
                 return value
+
+    def __is_collection(col):
+        if PYECORE_SUPPORT:
+            return isinstance(col, ECollection)
+        return type(col) is list
+
+    def __is_collection_or_enum(col):
+        if PYECORE_SUPPORT:
+            return isinstance(col, (ECollection, EEnumLiteral))
+        return type(col) is list
 
     def process_node(node):
         if isinstance(node, Terminal):
@@ -277,21 +292,24 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 # Object initialization will be done afterwards
                 # At this point we need object to be allocated
                 # So that nested object get correct reference
-                # inst = user_class.__new__(user_class)
-                if isinstance(user_class, EClass):
-                    inst = user_class()
+                if PYECORE_SUPPORT:
+                    if isinstance(user_class, EClass):
+                        inst = user_class()
+                    else:
+                        inst = user_class.__new__(user_class)
                 else:
                     inst = user_class.__new__(user_class)
-
-                # Initialize object attributes for user class
-                # parser.metamodel._init_obj_attrs(inst, user=True)
+                    # Initialize object attributes for user class
+                    parser.metamodel._init_obj_attrs(inst, user=True)
             else:
                 # Generic class will call attributes init
                 # from the constructor
-                    #inst = mclass.__new__(mclass)
-                inst = mclass()
-                # Initialize object attributes
-                #parser.metamodel._init_obj_attrs(inst)
+                if PYECORE_SUPPORT:
+                    inst = mclass()
+                else:
+                    inst = mclass.__new__(mclass)
+                    # Initialize object attributes
+                    parser.metamodel._init_obj_attrs(inst)
 
             # Collect attributes directly on meta-class instance
             obj_attrs = inst
@@ -327,9 +345,14 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     if hasattr(obj_attrs, '_txa_parent'):
                         attrs['parent'] = obj_attrs._txa_parent
                         del obj_attrs._txa_parent
-                    for a in obj_attrs.eClass.eAllStructuralFeatures():
-                        attrs[a.name] = getattr(obj_attrs, a.name)
-                        # delattr(obj_attrs, a.name)
+                    if PYECORE_SUPPORT:
+                        for a in obj_attrs.eClass.eAllStructuralFeatures():
+                            attrs[a.name] = getattr(obj_attrs, a.name)
+                            # delattr(obj_attrs, a.name)
+                    else:
+                        for a in obj_attrs.__class__._tx_attrs:
+                            attrs[a] = getattr(obj_attrs, "_txa_%s" % a)
+                            delattr(obj_attrs, "_txa_%s" % a)
                     inst.__init__(**attrs)
                 except TypeError as e:
                     # Add class name information in case of
@@ -354,15 +377,19 @@ def parse_tree_to_objgraph(parser, parse_tree):
             attr_name = node.rule._attr_name
             op = node.rule_name.split('_')[-1]
             model_obj, obj_attr = parser._inst_stack[-1]
-            cls = type(model_obj)
-            cls = cls.eClass if not hasattr(cls, '_tx_attrs') else cls
+            if PYECORE_SUPPORT:
+                cls = cls.eClass if not hasattr(cls, '_tx_attrs') else cls
+            else:
+                cls = type(model_obj)
             metaattr = cls._tx_attrs[attr_name]
 
             # Mangle attribute name to prevent name clashing with property
             # setters on user classes
             if cls.__name__ in metamodel.user_classes:
-                # txa_attr_name = "_txa_%s" % attr_name
-                txa_attr_name = attr_name
+                if PYECORE_SUPPORT:
+                    txa_attr_name = attr_name
+                else:
+                    txa_attr_name = "_txa_%s" % attr_name
             else:
                 txa_attr_name = attr_name
 
@@ -375,8 +402,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
 
             elif op == 'plain':
                 attr_value = getattr(obj_attr, txa_attr_name)
-                if attr_value and not isinstance(attr_value, (ECollection,
-                                                              EEnumLiteral)):
+                if attr_value and not __is_collection_or_enum(attr_value):
                     raise TextXSemanticError(
                         "Multiple assignments to attribute {} at {}"
                         .format(attr_name,
@@ -392,7 +418,7 @@ def parse_tree_to_objgraph(parser, parse_tree):
                     parser._crossrefs.append((model_obj, metaattr, value))
                     return model_obj
 
-                if isinstance(attr_value, ECollection):
+                if __is_collection(attr_value):
                     attr_value.append(value)
                 else:
                     setattr(obj_attr, txa_attr_name, value)
@@ -456,7 +482,9 @@ def parse_tree_to_objgraph(parser, parse_tree):
                         if result:
                             return result
                 elif cls._tx_type == RULE_COMMON:
-                    cls = cls.python_class if isinstance(cls, EClass) else cls
+                    if PYECORE_SUPPORT:
+                        cls = (cls.python_class if isinstance(cls, EClass)
+                               else cls)
                     if id(cls) in parser._instances:
                         objs = parser._instances[id(cls)]
                         if obj_name in objs:
@@ -494,8 +522,10 @@ def parse_tree_to_objgraph(parser, parse_tree):
         Depth-first model object processing.
         """
 
-        metaclass = type(model_obj)
-        metaclass = model_obj.eClass
+        if PYECORE_SUPPORT:
+            metaclass = model_obj.eClass
+        else:
+            metaclass = type(model_obj)
         if type(model_obj) not in PRIMITIVE_PYTHON_TYPES:
             for metaattr in metaclass._tx_attrs.values():
                 # If attribute is containment reference go down
