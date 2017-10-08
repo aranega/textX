@@ -11,15 +11,7 @@ Array:
 ;
 
 Value:
-    PrimitiveValue | TypeValue
-;
-
-PrimitiveValue:
-    value=STRING | value=FLOAT | value=BOOL | value="null"
-;
-
-TypeValue:
-    value=Object | value=Array
+    STRING | FLOAT | BOOL | Object | Array | "null"
 ;
 
 Object:

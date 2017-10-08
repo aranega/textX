@@ -5,7 +5,6 @@ from textx.metamodel import metamodel_from_str
 from textx.export import metamodel_export, model_export
 
 
-@pytest.mark.skip(reason="object processors are not supported by PyEcore.")
 def test_issue_14():
     """
     Test object processors in context of match rules with base types.

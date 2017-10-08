@@ -12,14 +12,13 @@ def test_issue_23():
 
     grammar = """
     List: members+=Value;
-    Value: ('{' List '}') | Identifier;
-    Identifier: val=ID;
+    Value: ('{' List '}') | ID;
     """
     mm = metamodel_from_str(grammar)
 
     assert mm['List']._tx_type is RULE_COMMON
     assert mm['Value']._tx_type is RULE_ABSTRACT
-    assert mm['Value']._tx_inh_by == [mm['List'], mm['Identifier']]
+    assert mm['Value']._tx_inh_by == [mm['List']]
 
     grammar = """
     List: '{' members+=Value '}';
@@ -33,8 +32,7 @@ def test_issue_23():
     grammar = """
     ListSyntax: '{' List '}';
     List: members+=Value;
-    Value: ListSyntax | Identifier;
-    Identifier: val=ID;
+    Value: ListSyntax | ID;
     """
     mm = metamodel_from_str(grammar)
 
@@ -42,4 +40,4 @@ def test_issue_23():
     assert mm['ListSyntax']._tx_inh_by == [mm['List']]
     assert mm['List']._tx_type is RULE_COMMON
     assert mm['Value']._tx_type is RULE_ABSTRACT
-    assert mm['Value']._tx_inh_by == [mm['ListSyntax'], mm['Identifier']]
+    assert mm['Value']._tx_inh_by == [mm['ListSyntax']]

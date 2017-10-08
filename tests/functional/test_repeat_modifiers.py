@@ -115,7 +115,7 @@ def test_assignment_modifier_separator_zeroormore():
     model = metamodel.model_from_str("a,b, a")
     # 3 AorBs must be matched
     assert len(model.a) == 3
-    assert str(model.a[1]) == 'b'
+    assert model.a[1] == 'b'
 
 
 def test_assignment_modifier_separator_oneormore():
@@ -130,7 +130,7 @@ def test_assignment_modifier_separator_oneormore():
     model = metamodel.model_from_str("a,b, a")
     # 3 AorBs must be matched
     assert len(model.a) == 3
-    assert str(model.a[1]) == 'b'
+    assert model.a[1] == 'b'
 
 
 def test_assignment_modifier_separator_optional():

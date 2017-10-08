@@ -1,6 +1,6 @@
 import pytest  # noqa
 from textx.metamodel import metamodel_from_str
-from pyecore.ecore import EMetaclass, EInt, EAttribute
+
 
 grammar = """
     UserModel:
@@ -9,10 +9,7 @@ grammar = """
 """
 
 
-@EMetaclass
 class UserModel(object):
-    _a = EAttribute('a', eType=EInt, derived=True)
-
     def __init__(self, a):
         self._a = a
 

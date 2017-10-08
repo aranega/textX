@@ -42,7 +42,7 @@ class Robot(object):
                     "down": (0, -1),
                     "left": (-1, 0),
                     "right": (1, 0)
-                }[str(dir)]
+                }[dir]
 
                 # Calculate new robot position
                 self.x += c.steps * move[0]

@@ -18,7 +18,7 @@ def test_json_issue():
     ;
 
     Value:
-        PrimitiveValue | Object | Array | NullValue
+        STRING | FLOAT | BOOL | Object | Array | "null"
     ;
 
     Object:
@@ -27,14 +27,6 @@ def test_json_issue():
 
     Member:
         key=STRING ':' value=Value
-    ;
-
-    PrimitiveValue:
-        val=STRING | val=FLOAT | val=BOOL
-    ;
-
-    NullValue:
-        val="null"
     ;
     """
     json_mm = metamodel_from_str(grammar)

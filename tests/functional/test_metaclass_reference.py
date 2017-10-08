@@ -1,7 +1,6 @@
 import pytest
 import os
 from textx.metamodel import metamodel_from_str, metamodel_from_file
-from pyecore.ecore import EMetaclass
 
 grammar = """
 First:
@@ -22,17 +21,16 @@ def test_metaclass_ref():
 
     model = metamodel.model_from_str('first 45 "test" 12')
 
-    assert model.eClass is First
-    assert all(x.eClass is Second for x in model.seconds)
+    assert type(model) is First
+    assert all(type(x) is Second for x in model.seconds)
 
 
 def test_metaclass_user_class():
     """
     User supplied meta class.
     """
-    @EMetaclass
     class First(object):
-        def __init__(self, seconds=None):
+        def __init__(self, seconds):
             self.seconds = seconds
 
     metamodel = metamodel_from_str(grammar, classes=[First])
@@ -53,8 +51,8 @@ def test_metaclass_relative_paths(filename):
     model = mm.model_from_str('first 12 45 third "abc" "xyz"')
     inner_second = model.first[0]
 
-    assert all(x.eClass is ThirdMasked for x in inner_second.second)
-    assert all(x.eClass is Third for x in model.third)
+    assert all(type(x) is ThirdMasked for x in inner_second.second)
+    assert all(type(x) is Third for x in model.third)
 
 
 def test_diamond_import():
@@ -71,6 +69,6 @@ def test_diamond_import():
 
     model = mm.model_from_str('second 12 45 third 4 5')
 
-    assert model.eClass is First
-    assert all(x.diamond.eClass is MyDiamondRule for x in model.seconds)
-    assert all(x.diamond.eClass is MyDiamondRule for x in model.thirds)
+    assert type(model) is First
+    assert all(type(x.diamond) is MyDiamondRule for x in model.seconds)
+    assert all(type(x.diamond) is MyDiamondRule for x in model.thirds)
