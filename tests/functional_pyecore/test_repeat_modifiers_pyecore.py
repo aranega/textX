@@ -2,9 +2,15 @@ from __future__ import unicode_literals
 import pytest
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
-textx.enable_pyecore_support()  # noqa
 from textx.metamodel import metamodel_from_str
 from textx.exceptions import TextXSyntaxError
+
+
+@pytest.fixture(scope="module")
+def enable_pyecore_support():
+    textx.enable_pyecore_support()
+    yield
+    textx.enable_pyecore_support(enable=False)
 
 
 def test_modifier_separator_zeroormore():

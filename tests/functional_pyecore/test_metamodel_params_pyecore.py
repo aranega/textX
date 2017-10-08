@@ -1,9 +1,18 @@
 import pytest
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
-textx.enable_pyecore_support()  # noqa
 from textx.metamodel import metamodel_from_str
 from textx.exceptions import TextXSyntaxError
+
+
+@pytest.fixture(scope="module")
+def enable_pyecore_support():
+    textx.enable_pyecore_support()
+    yield
+    textx.enable_pyecore_support(enable=False)
+
+
+pytestmark = pytest.mark.usefixtures("enable_pyecore_support")
 
 
 def test_ignore_case():
