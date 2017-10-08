@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import argparse
-from pyecoregen.ecore import EcoreGenerator
 from textx.metamodel import metamodel_from_file
 from textx.export import metamodel_export, model_export
 from textx.exceptions import TextXError
@@ -71,6 +70,12 @@ def textx():
             print("To convert to png run 'dot -Tpng -O %s.dot'" % args.model)
             model_export(model, "%s.dot" % args.model)
     elif args.cmd == "generate":
+        try:
+            from pyecoregen.ecore import EcoreGenerator
+        except ImportError:
+            print('The PyEcore generation support is disable, please install '
+                  'pyecoregen to enable it.')
+            sys.exit(2)
         dest = args.out_folder
         generator = EcoreGenerator()
         # Iterate on each resources from the metamodel resource set in case
@@ -81,7 +86,3 @@ def textx():
             print("Generating '%s' PyEcore package for "
                   "meta-model in folder '%s'." % (package.name, dest))
             generator.generate(package, dest)
-
-
-if __name__ == '__main__':
-    textx()
