@@ -350,22 +350,6 @@ class TextXVisitor(PTNodeVisitor):
                                 return True
                     match = _has_match_ref(rule)
 
-            # def change_to_datatype(cls, rule):
-            #     if isinstance(cls, EDataType):
-            #         return
-            #     datatype_type = self._potential_datatypes[cls]
-            #     # self.metamodel.eClassifiers.remove(cls)
-            #     # self.metamodel._current_epackage.eClassifiers.remove(cls)
-            #     cls.ePackage = None
-            #     cls = self.metamodel \
-            #               ._new_class(cls.name, rule,
-            #                           cls._tx_position,
-            #                           inherits=cls._tx_inh_by,
-            #                           rule_type=cls._tx_type,
-            #                           kind=EDataType,
-            #                           eType=datatype_type)
-            #     self._current_cls = cls
-
             if abstract:
                 if textx.is_pyecore_enabled() and match:
                     line, col = (self.grammar_parser
@@ -404,7 +388,8 @@ class TextXVisitor(PTNodeVisitor):
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
 
-            elif textx.is_pyecore_enabled() and cls in self._potential_datatypes and \
+            elif textx.is_pyecore_enabled() and \
+                    cls in self._potential_datatypes and \
                     not isinstance(cls, EDataType):
                 datatype_type = self._potential_datatypes[cls]
                 cls.ePackage = None
