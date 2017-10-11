@@ -103,6 +103,33 @@ Docs and tutorials
 
 The full documentation with tutorials is available at http://igordejanovic.net/textX/
 
+Python EMF support
+==================
+
+TextX also supports `PyEcore <https://github.com/pyecore/pyecore/>`_ as
+metamodel and model layer alternative. This support enables the  metamodel code
+generation from a grammar (if needed) and gives the ability to handle the model
+and the metamodel part with an EMF compatible API. It also gives,
+out-of-the-box, an XMI/JSON serialization support for the model and/or
+metamodel, opposite relationships, and code generation facilities.
+
+Python EMF support activation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to enable PyEcore (Python EMF), you need to import the `textx` package
+and use the `enable_pyecore_support()` method:
+
+.. code:: python
+
+    from textx.metamodel import metamodel_from_str  # regular textX import
+    import textx
+
+    textx.enable_pyecore_support()
+
+The package importation can be made in any order. For more details, check the
+documentation at this adress `not yet available <http://notyet/>`_, and the
+`PyEcore README <https://github.com/pyecore/pyecore/blob/master/README.rst>`_.
+
 License
 =======
 
@@ -129,5 +156,3 @@ Tested for 2.7, 3.3+
 .. |docs| image:: https://img.shields.io/badge/docs-latest-green.svg
    :target: http://igordejanovic.net/textX/
    :alt: Documentation Status
-
-
