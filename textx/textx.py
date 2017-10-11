@@ -22,9 +22,9 @@ from arpeggio import RegExMatch as _
 from .exceptions import TextXSyntaxError, TextXSemanticError
 from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, \
     MULT_OPTIONAL, RULE_COMMON, RULE_MATCH, RULE_ABSTRACT, mult_lt
-import textx
+from . import is_pyecore_enabled
 
-if textx.is_pyecore_enabled():
+if is_pyecore_enabled():
     from pyecore.ecore import EAttribute, EReference, EDataType, EEnum, \
         EEnumLiteral, EBoolean
 
@@ -186,7 +186,7 @@ class TextXVisitor(PTNodeVisitor):
             flags = re.IGNORECASE
         self.keyword_regex = re.compile(r'[^\d\W]\w*', flags)
 
-        if textx.is_pyecore_enabled():
+        if is_pyecore_enabled():
             self._potential_datatypes = {}
 
         super(TextXVisitor, self).__init__()
@@ -222,7 +222,7 @@ class TextXVisitor(PTNodeVisitor):
         self._determine_rule_types(model_parser.metamodel)
         self._resolve_cls_refs(self.grammar_parser, model_parser)
 
-        if textx.is_pyecore_enabled():
+        if is_pyecore_enabled():
             self._potential_datatypes.clear()
 
         return model_parser
@@ -337,7 +337,7 @@ class TextXVisitor(PTNodeVisitor):
                         if result:
                             return True
                 abstract = _has_nonmatch_ref(rule)
-                if textx.is_pyecore_enabled():
+                if is_pyecore_enabled():
                     # TODO rewrite this and mix it with the previous closure
                     def _has_match_ref(rule):
                         for r in rule.nodes:
@@ -351,7 +351,7 @@ class TextXVisitor(PTNodeVisitor):
                     match = _has_match_ref(rule)
 
             if abstract:
-                if textx.is_pyecore_enabled() and match:
+                if is_pyecore_enabled() and match:
                     line, col = (self.grammar_parser
                                  .pos_to_linecol(cls._tx_position))
                     raise TextXSemanticError(
@@ -359,13 +359,13 @@ class TextXVisitor(PTNodeVisitor):
                         'position {}.'
                         .format(rule.rule_name, (line, col)), line, col)
                 cls._tx_type = RULE_ABSTRACT
-                if textx.is_pyecore_enabled():
+                if is_pyecore_enabled():
                     cls.abstract = True
                 # Add inherited classes to this rule's meta-class
                 if rule.rule_name and cls.__name__ != rule.rule_name:
                     if rule._tx_class not in cls._tx_inh_by:
                         cls._tx_inh_by.append(rule._tx_class)
-                        if textx.is_pyecore_enabled() and not match:
+                        if is_pyecore_enabled() and not match:
                             rule._tx_class.eSuperTypes.append(cls)
                 else:
                     # Recursivelly append all referenced classes.
@@ -377,7 +377,7 @@ class TextXVisitor(PTNodeVisitor):
                                     if r._tx_class._tx_type != RULE_MATCH and\
                                             r._tx_class not in inh_by:
                                         inh_by.append(r._tx_class)
-                                        if textx.is_pyecore_enabled():
+                                        if is_pyecore_enabled():
                                             is_type = isinstance(r._tx_class,
                                                                  type)
                                             tx_class = (r._tx_class.eClass
@@ -388,7 +388,7 @@ class TextXVisitor(PTNodeVisitor):
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
 
-            elif textx.is_pyecore_enabled() and \
+            elif is_pyecore_enabled() and \
                     cls in self._potential_datatypes and \
                     not isinstance(cls, EDataType):
                 datatype_type = self._potential_datatypes[cls]
@@ -448,7 +448,7 @@ class TextXVisitor(PTNodeVisitor):
                     else:
                         attr.ref = True
 
-                    if textx.is_pyecore_enabled():
+                    if is_pyecore_enabled():
                         if attr.mult == MULT_ONE:
                             lower, upper = 1, 1
                         elif attr.mult == MULT_ONEORMORE:
@@ -648,7 +648,7 @@ class TextXVisitor(PTNodeVisitor):
         return RuleCrossRef(rule_name, rule_name, node.position)
 
     def visit_textx_rule_body(self, node, children):
-        if textx.is_pyecore_enabled():
+        if is_pyecore_enabled():
             if self.rule_is_enumeration(children):
                 current_cls = self._current_cls
                 self.metamodel.eClassifiers.remove(current_cls)
