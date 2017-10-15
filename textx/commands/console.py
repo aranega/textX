@@ -77,7 +77,7 @@ def textx():
                   'pyecoregen to enable it.')
             sys.exit(2)
         dest = args.out_folder
-        generator = EcoreGenerator()
+        generator = EcoreGenerator(auto_register_package=True)
         # Iterate on each resources from the metamodel resource set in case
         # the grammar references other ones (i.e: the meta-model references
         # other ones).
