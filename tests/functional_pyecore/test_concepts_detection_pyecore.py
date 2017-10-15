@@ -7,6 +7,7 @@ pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
 ecore = pytest.importorskip("pyecore.ecore")  # noqa
 import textx
 from textx.metamodel import metamodel_from_str
+from textx.textx import TextXSyntaxError
 
 
 @pytest.fixture(scope="module")
@@ -136,3 +137,17 @@ def test_eclass_detection():
     nameFeature, yearFeature = IsEClass.eStructuralFeatures
     assert nameFeature.name == 'name' and nameFeature.eType is ID
     assert yearFeature.name == 'year' and yearFeature.eType is INT
+
+
+def test_incompatible_rules():
+    """
+    Test that 'mixed' rules raises errors
+    """
+
+    grammar = """
+    A: B | C;
+    B: 'enumeration';
+    C: value=INT;
+    """
+    with pytest.raises(TextXSyntaxError):
+        metamodel_from_str(grammar)
