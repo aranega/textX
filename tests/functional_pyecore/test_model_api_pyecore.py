@@ -3,6 +3,9 @@ Model query and navigation API.
 """
 from __future__ import unicode_literals
 import pytest  # noqa
+import sys
+pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
+                                reason="pyecore is not Python 2 compatible")  # noqa
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
 from textx.metamodel import metamodel_from_str

@@ -2,6 +2,9 @@
 Testing user class constructor call and parent reference.
 """
 import pytest  # noqa
+import sys
+pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
+                                reason="pyecore is not Python 2 compatible")  # noqa
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
 from textx.metamodel import metamodel_from_str
