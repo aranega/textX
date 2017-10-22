@@ -436,8 +436,8 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
             else:
                 new_cls.default_value = default_value
             new_cls.eType = cls.eType
-            new_cls.from_string = copy.copy(cls.from_string)
-            new_cls.to_string = copy.copy(cls.to_string)
+            new_cls.from_string = cls.from_string
+            new_cls.to_string = cls.to_string
             new_cls.type_as_factory = cls.type_as_factory
             new_cls.ePackage = fake_epackage
 

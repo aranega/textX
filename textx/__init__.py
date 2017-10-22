@@ -13,13 +13,15 @@ def enable_pyecore_support(enable=True):
     import sys
     if sys.version > '3':
         try:
-            from importlib import reload
+            from importlib import reload as my_reload
         except ImportError:
-            from imp import reload
+            from imp import reload as my_reload
+    else:
+        my_reload = reload
 
-    import textx.model
-    import textx.metamodel
-    import textx.textx
-    reload(textx.metamodel)
-    reload(textx.model)
-    reload(textx.textx)
+    from . import model
+    from . import metamodel
+    from . import textx
+    my_reload(metamodel)
+    my_reload(model)
+    my_reload(textx)
