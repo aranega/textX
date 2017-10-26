@@ -422,12 +422,6 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
             return ns + '.' + cls.__name__
 
     def _register_ecore_datatypes(self):
-        # We add a fake resource and a fake EPackage for serialization purposes
-        resource = Resource(URI(ecore.nsURI))
-        fake_epackage = EPackage(ecore.name, nsPrefix=ecore.nsPrefix,
-                                 nsURI=ecore.nsURI)
-        resource.append(fake_epackage)
-
         def _duplicate_datatype(cls, default_value=None):
             import copy
             new_cls = cls.eClass(cls.name, eType=cls.eType)
@@ -439,7 +433,10 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
             new_cls.from_string = cls.from_string
             new_cls.to_string = cls.to_string
             new_cls.type_as_factory = cls.type_as_factory
-            new_cls.ePackage = fake_epackage
+            # We cheat and add the new type to the Ecore metamodel
+            # this allows a better '.ecore' xmi serialization
+            ecore.eClassifiers[new_cls.name] = new_cls
+            new_cls._container = ecore
 
             return new_cls
 
@@ -459,6 +456,7 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
         from numbers import Number
         ENumber = EDataType('ENumber', Number)
         base_id = _insert_class(EString, ID, name='ID', default_value='')
+
         base_string = _insert_class(EString, STRING, name='STRING',
                                     default_value='')
         base_bool = _insert_class(EBoolean, BOOL, name='BOOL')
