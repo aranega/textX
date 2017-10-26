@@ -657,7 +657,7 @@ class TextXVisitor(PTNodeVisitor):
                                                 kind=EEnum)
                 self._current_cls = cls
                 for i, literal in enumerate(children):
-                    cls.eLiterals.append(EEnumLiteral(i, str(literal)))
+                    cls.eLiterals.append(EEnumLiteral(i, text(literal)))
             elif self.current_is_datatype():
                 self._potential_datatypes[self._current_cls] = \
                                                   self.compute_etype(children)
