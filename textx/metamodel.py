@@ -12,11 +12,11 @@ import os
 from collections import OrderedDict
 from arpeggio import DebugPrinter
 from textx.six import add_metaclass
-from .textx import language_from_str, python_type, BASE_TYPE_NAMES, ID, BOOL,\
-    INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
-from .const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, RULE_MATCH, \
-    RULE_ABSTRACT
-from . import is_pyecore_enabled
+from textx.lang import language_from_str, python_type, BASE_TYPE_NAMES, ID, \
+    BOOL, INT, FLOAT, STRING, NUMBER, BASETYPE, OBJECT
+from textx.const import MULT_ONE, MULT_ZEROORMORE, MULT_ONEORMORE, \
+    RULE_MATCH, RULE_ABSTRACT
+from textx.pyecore import is_pyecore_enabled
 
 if is_pyecore_enabled():
     from pyecore.ecore import EObject, EClass, EPackage, EDataType, EEnum, \

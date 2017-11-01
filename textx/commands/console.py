@@ -41,6 +41,16 @@ def textx():
         print("Unknown command {}. Command must be one of"
               " 'visualize', 'check', 'generate'.".format(args.cmd))
         sys.exit(1)
+    if args.cmd == "generate":
+        try:
+            from pyecoregen.ecore import EcoreGenerator
+            from pyecore.resources import URI
+            from textx import enable_pyecore_support
+        except ImportError:
+            print('The PyEcore generation support is disable, please install '
+                  'pyecoregen to enable it.')
+            sys.exit(2)
+        enable_pyecore_support()
 
     try:
         metamodel = metamodel_from_file(args.metamodel, ignore_case=args.i,
@@ -70,12 +80,6 @@ def textx():
             print("To convert to png run 'dot -Tpng -O %s.dot'" % args.model)
             model_export(model, "%s.dot" % args.model)
     elif args.cmd == "generate":
-        try:
-            from pyecoregen.ecore import EcoreGenerator
-        except ImportError:
-            print('The PyEcore generation support is disable, please install '
-                  'pyecoregen to enable it.')
-            sys.exit(2)
         dest = args.out_folder
         generator = EcoreGenerator(auto_register_package=True)
         # Iterate on each resources from the metamodel resource set in case
@@ -86,3 +90,8 @@ def textx():
             print("Generating '%s' PyEcore package for "
                   "meta-model in folder '%s'." % (package.name, dest))
             generator.generate(package, dest)
+            resource.save(output=URI(dest + '/' + package.name + '.ecore'))
+
+
+if __name__ == '__main__':
+    textx()

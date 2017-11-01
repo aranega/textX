@@ -1,27 +1,8 @@
+from textx.metamodel import metamodel_from_file, metamodel_from_str
+from textx.model import children_of_type, parent_of_type, model_root
+from textx.exceptions import TextXError, TextXSyntaxError, \
+    TextXSemanticError
+from textx.langapi import get_language, iter_languages
+from textx.pyecore import is_pyecore_enabled, enable_pyecore_support
+
 __version__ = "1.6.dev"
-
-__PYECORE_SUPPORT = False
-
-
-def is_pyecore_enabled():
-    return __PYECORE_SUPPORT
-
-
-def enable_pyecore_support(enable=True):
-    global __PYECORE_SUPPORT
-    __PYECORE_SUPPORT = enable
-    import sys
-    if sys.version > '3':
-        try:
-            from importlib import reload as my_reload
-        except ImportError:
-            from imp import reload as my_reload
-    else:
-        my_reload = reload
-
-    from . import model
-    from . import metamodel
-    from . import textx
-    my_reload(metamodel)
-    my_reload(model)
-    my_reload(textx)

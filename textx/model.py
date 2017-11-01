@@ -3,7 +3,7 @@
 # Purpose: Model construction.
 # Author: Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
 # Copyright:
-#    (c) 2014 Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
+#    (c) 2014-2017 Igor R. Dejanovic <igor DOT dejanovic AT gmail DOT com>
 # License: MIT License
 #######################################################################
 
@@ -11,11 +11,11 @@ import sys
 import codecs
 import traceback
 from arpeggio import Parser, Sequence, NoMatch, EOF, Terminal
-from .exceptions import TextXSyntaxError, TextXSemanticError
-from .const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, MULT_ZEROORMORE, \
-    RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
-from .textx import PRIMITIVE_PYTHON_TYPES
-from . import is_pyecore_enabled
+from textx.exceptions import TextXSyntaxError, TextXSemanticError
+from textx.const import MULT_OPTIONAL, MULT_ONE, MULT_ONEORMORE, \
+    MULT_ZEROORMORE, RULE_COMMON, RULE_ABSTRACT, RULE_MATCH
+from textx.lang import PRIMITIVE_PYTHON_TYPES
+from textx.pyecore import is_pyecore_enabled
 
 if is_pyecore_enabled():
     from pyecore.ecore import EClass, EEnum, EEnumLiteral, ECollection
@@ -456,7 +456,6 @@ def parse_tree_to_objgraph(parser, parse_tree):
         """
         # TODO: Scoping and name-space rules.
 
-        resolved_set = set()
         metamodel = parser.metamodel
 
         def _resolve_link_rule_ref(obj_ref):

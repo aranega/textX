@@ -37,23 +37,23 @@ if sys.argv[-1].startswith('publish'):
     sys.exit()
 
 setup(
-    name = NAME,
-    version = VERSION,
-    description = DESC,
-    long_description = README,
-    author = AUTHOR,
-    author_email = AUTHOR_EMAIL,
-    maintainer = AUTHOR,
-    maintainer_email = AUTHOR_EMAIL,
-    license = LICENSE,
-    url = URL,
-    download_url = DOWNLOAD_URL,
-    packages = ["textx", "textx.commands"],
-    install_requires = ["Arpeggio"],
-    extras_require = {
+    name=NAME,
+    version=VERSION,
+    description=DESC,
+    long_description=README,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    maintainer=AUTHOR,
+    maintainer_email=AUTHOR_EMAIL,
+    license=LICENSE,
+    url=URL,
+    download_url=DOWNLOAD_URL,
+    packages=["textx", "textx.commands"],
+    install_requires=["Arpeggio"],
+    extras_require={
         'ecore':  ["pyecoregen"],
     },
-    keywords = "parser meta-language meta-model language DSL",
+    keywords="parser meta-language meta-model language DSL",
     entry_points={
         'console_scripts': [
             'textx = textx.commands.console:textx'
