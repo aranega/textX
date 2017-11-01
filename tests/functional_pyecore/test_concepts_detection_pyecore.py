@@ -7,7 +7,7 @@ pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
 ecore = pytest.importorskip("pyecore.ecore")  # noqa
 import textx
 from textx.metamodel import metamodel_from_str
-from textx.textx import TextXSyntaxError
+from textx.lang import TextXSyntaxError
 
 
 @pytest.fixture(scope="module")
