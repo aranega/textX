@@ -120,7 +120,7 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
     def __init__(self, file_name=None, classes=None, builtins=None,
                  match_filters=None, auto_init_attributes=True,
                  ignore_case=False, skipws=True, ws=None, autokwd=False,
-                 memoization=False, resource_set=None, **kwargs):
+                 memoization=False, resource_set=None, packages=None, **kwargs):
         super(TextXMetaModel, self).__init__(**kwargs)
 
         self.file_name = file_name
@@ -130,14 +130,25 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
 
         # Convert classes to dict for easier lookup
         self.user_classes = {}
-        if classes:
+
+        def register_custom_classes(classes):
             for c in classes:
                 if is_pyecore_enabled():
                     if isinstance(c, (EEnum, EDataType)):
                         c.__name__ = c.name
                     if isinstance(c, EObject):
                         c.ePackage = self
+                print(c, type(c))
                 self.user_classes[c.__name__] = c
+
+        if classes:
+            register_custom_classes(classes)
+        if packages:
+            for package in packages:
+                classes = package.eClassifiers
+                if isinstance(package.eClassifiers, dict):
+                    classes = package.eClassifiers.values()
+                register_custom_classes(classes)
 
         self.match_filters = match_filters if match_filters else {}
 
