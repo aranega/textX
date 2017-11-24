@@ -10,7 +10,7 @@ from __future__ import print_function, unicode_literals
 
 import time
 from os.path import dirname, join, getsize
-from textx.metamodel import metamodel_from_file
+from textx import metamodel_from_file
 
 def timeit(file_name, message, **kwargs):
     print(message, 'File:', file_name)

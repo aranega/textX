@@ -1,5 +1,5 @@
 from os.path import join, dirname
-from textx.metamodel import metamodel_from_file
+from textx import metamodel_from_file
 from textx.export import metamodel_export, model_export
 
 
@@ -16,4 +16,3 @@ def main(debug=False):
 
 if __name__ == '__main__':
     main()
-

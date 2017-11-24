@@ -5,7 +5,7 @@ pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
 import os
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
-from textx.metamodel import metamodel_from_str, metamodel_from_file
+from textx import metamodel_from_str, metamodel_from_file
 
 
 @pytest.fixture(scope="module")

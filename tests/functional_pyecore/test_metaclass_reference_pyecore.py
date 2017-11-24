@@ -4,7 +4,7 @@ import sys
 pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
                                 reason="pyecore is not Python 2 compatible")  # noqa
 pyecore = pytest.importorskip("pyecore")  # noqa
-from textx.metamodel import metamodel_from_str, metamodel_from_file
+from textx import metamodel_from_str, metamodel_from_file
 from pyecore.ecore import EMetaclass
 import textx
 

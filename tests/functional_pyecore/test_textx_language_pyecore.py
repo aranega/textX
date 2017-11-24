@@ -6,7 +6,7 @@ pytestmark = pytest.mark.skipif(sys.version_info[0] < 3,
 pyecore = pytest.importorskip("pyecore")  # noqa
 import textx
 
-from textx.metamodel import metamodel_from_str
+from textx import metamodel_from_str
 from textx.lang import ALL_TYPE_NAMES
 from textx.exceptions import TextXSyntaxError
 from textx.const import RULE_MATCH, RULE_ABSTRACT, RULE_COMMON
