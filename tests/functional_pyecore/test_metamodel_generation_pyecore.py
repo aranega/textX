@@ -64,10 +64,8 @@ def pygen_output_dir(cwd_module_dir):
     shutil.rmtree(path, ignore_errors=False)
 
 
-def generate_meta_model(model, output_dir, *, user_module=None,
-                        auto_register_package=None):
-    generator = EcoreGenerator(user_module=user_module,
-                               auto_register_package=auto_register_package)
+def generate_meta_model(model, output_dir, **kwargs):
+    generator = EcoreGenerator(**kwargs)
     generator.generate(model, output_dir)
     return importlib.import_module(model.name)
 
@@ -75,7 +73,8 @@ def generate_meta_model(model, output_dir, *, user_module=None,
 def test_generate_single_metamodel(pygen_output_dir):
     metamodel = textx.metamodel_from_str(grammar)
     mm = generate_meta_model(metamodel, pygen_output_dir,
-                             auto_register_package=True)
+                             auto_register_package=True,
+                             with_dependencies=True)
 
     assert mm.First
     assert isinstance(mm.First.seconds, Ecore.EReference)
@@ -104,7 +103,8 @@ def test_parse_prog_from_generated_metamodel(pygen_output_dir):
     # We generate first the metamodel code
     metamodel = textx.metamodel_from_str(grammar)
     mm = generate_meta_model(metamodel, pygen_output_dir,
-                             auto_register_package=True)
+                             auto_register_package=True,
+                             with_dependencies=True)
     # We parse again the grammar with the generated code as user_classes
     metamodel = textx.metamodel_from_str(grammar, packages=(mm,))
 
