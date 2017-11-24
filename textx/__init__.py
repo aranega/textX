@@ -4,5 +4,3 @@ from textx.exceptions import TextXError, TextXSyntaxError, \
     TextXSemanticError
 from textx.langapi import get_language, iter_languages
 from textx.pyecore import is_pyecore_enabled, enable_pyecore_support
-
-__version__ = "1.6.dev"
