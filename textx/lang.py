@@ -450,14 +450,21 @@ class TextXVisitor(PTNodeVisitor):
                         attr.ref = True
 
                     if is_pyecore_enabled():
-                        if attr.mult == MULT_ONE:
-                            lower, upper = 1, 1
-                        elif attr.mult == MULT_ONEORMORE:
-                            lower, upper = 1, -1
-                        elif attr.mult == MULT_OPTIONAL:
-                            lower, upper = 0, 1
-                        else:
-                            lower, upper = 0, -1
+                        ecls = cls.eClass if isinstance(cls, type) else cls
+                        # if the feature already exists, we skip this
+                        if ecls.findEStructuralFeature(attr.name) is not None:
+                            continue
+                        elif ecls.name in metamodel.user_classes:
+                            continue
+                        # else, we build the attribute and we add it to the
+                        # EClass
+                        cardinalities = {
+                            MULT_ONE: (1, 1),
+                            MULT_ONEORMORE: (1, -1),
+                            MULT_OPTIONAL: (0, 1),
+                            MULT_ZEROORMORE: (0, -1)
+                        }
+                        lower, upper = cardinalities[attr.mult]
 
                         is_ref = attr.ref and not isinstance(attr.cls,
                                                              (EDataType,
@@ -469,9 +476,7 @@ class TextXVisitor(PTNodeVisitor):
                         if attr.cont:
                             feature.containment = True
                         feature.position = attr.position
-                        tmp = cls.eClass if isinstance(cls, type) else cls
-                        if tmp.findEStructuralFeature(attr.name) is None:
-                            tmp.eStructuralFeatures.append(feature)
+                        ecls.eStructuralFeatures.append(feature)
 
                     if grammar_parser.debug:
                         grammar_parser.dprint(

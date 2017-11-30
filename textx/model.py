@@ -295,8 +295,11 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 if is_pyecore_enabled():
                     if isinstance(user_class, EClass):
                         inst = user_class()
+                    if isinstance(user_class, type):
+                        inst = user_class.__new__(user_class, 'tmp_name')
                     else:
                         inst = user_class.__new__(user_class)
+                    parser.metamodel._init_obj_attrs(inst)
                 else:
                     inst = user_class.__new__(user_class)
                     # Initialize object attributes for user class
@@ -346,8 +349,8 @@ def parse_tree_to_objgraph(parser, parse_tree):
                         attrs['parent'] = obj_attrs._txa_parent
                         del obj_attrs._txa_parent
                     if is_pyecore_enabled():
-                        for a in obj_attrs.eClass.eAllStructuralFeatures():
-                            attrs[a.name] = getattr(obj_attrs, a.name)
+                        for a in obj_attrs.__class__._tx_attrs:
+                            attrs[a] = getattr(obj_attrs, a)
                             # delattr(obj_attrs, a.name)
                     else:
                         for a in obj_attrs.__class__._tx_attrs:

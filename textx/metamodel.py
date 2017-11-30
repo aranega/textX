@@ -120,7 +120,8 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
     def __init__(self, file_name=None, classes=None, builtins=None,
                  match_filters=None, auto_init_attributes=True,
                  ignore_case=False, skipws=True, ws=None, autokwd=False,
-                 memoization=False, resource_set=None, packages=None, **kwargs):
+                 memoization=False, resource_set=None, packages=None,
+                 **kwargs):
         super(TextXMetaModel, self).__init__(**kwargs)
 
         self.file_name = file_name
@@ -138,7 +139,6 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
                         c.__name__ = c.name
                     if isinstance(c, EObject):
                         c.ePackage = self
-                print(c, type(c))
                 self.user_classes[c.__name__] = c
 
         if classes:
@@ -489,10 +489,15 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
             obj(object): A python object to set attributes to.
             user(bool): If this object is a user object mangle attribute names.
         """
+        if is_pyecore_enabled():
+            meta_attrs = {x.name for x in obj.eClass.eAllStructuralFeatures()}
+
         for attr in obj.__class__._tx_attrs.values():
+            if is_pyecore_enabled() and attr.name in meta_attrs:
+                continue
 
             if user:
-                # Mangle name to prvent name clashing
+                # Mangle name to prevent name clashing
                 attr_name = "_txa_%s" % attr.name
             else:
                 attr_name = attr.name

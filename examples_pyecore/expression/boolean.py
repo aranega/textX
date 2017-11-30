@@ -1,8 +1,11 @@
 from os.path import join, dirname
 from textx import metamodel_from_str
+from textx.pyecore import enable_pyecore_support
 from textx.export import metamodel_export, model_export
 from pyecore.ecore import EObject, EMetaclass, EReference, EAttribute, \
                             ENativeType, EBoolean
+
+enable_pyecore_support()
 
 grammar = '''
 Bool: assignments*=Assignment expression=Or;
@@ -20,6 +23,7 @@ namespace = {}
 @EMetaclass
 class Bool(object):
     assignments = EReference(eType=EObject, upper=-1)
+    expression = EReference()
 
     def __init__(self, **kwargs):
         self.assignments = kwargs.pop('assignments')
@@ -48,6 +52,8 @@ class ExpressionElement(object):
 
 
 class Or(ExpressionElement):
+    op = EReference(upper=-1)
+
     @property
     def value(self):
         ret = self.op[0].value
@@ -56,10 +62,12 @@ class Or(ExpressionElement):
         return ret
 
 
-Bool.expression = EReference('expression', eType=Or)
+Bool.expression.eType = Or
 
 
 class And(ExpressionElement):
+    op = EReference(upper=-1)
+
     @property
     def value(self):
         ret = self.op[0].value
@@ -68,11 +76,12 @@ class And(ExpressionElement):
         return ret
 
 
-Or.op = EReference('op', And, upper=-1)
+Or.op.eType = And
 
 
 class Not(ExpressionElement):
     _not = EAttribute(eType=EBoolean)
+    op = EReference()
 
     def __init__(self, **kwargs):
         self._not = kwargs.pop('_not')
@@ -84,7 +93,7 @@ class Not(ExpressionElement):
         return not ret if self._not else ret
 
 
-And.op = EReference('op', Not, upper=-1)
+And.op.eType = Not
 
 
 class Operand(ExpressionElement):
@@ -102,7 +111,7 @@ class Operand(ExpressionElement):
                             .format(op, self._tx_position))
 
 
-Not.op = EReference('op', Operand)
+Not.op.eType = Operand
 
 
 def main(debug=False):

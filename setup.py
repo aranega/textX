@@ -50,7 +50,8 @@ setup(
     packages=["textx", "textx.commands"],
     install_requires=["Arpeggio"],
     extras_require={
-        'ecore':  ["pyecoregen"],
+        'ecore':  ["pyecore"],
+        'ecoregen': ["pyecoregen"]
     },
     keywords="parser meta-language meta-model language DSL",
     entry_points={
