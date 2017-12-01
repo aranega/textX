@@ -293,8 +293,6 @@ def parse_tree_to_objgraph(parser, parse_tree):
                 # At this point we need object to be allocated
                 # So that nested object get correct reference
                 if is_pyecore_enabled():
-                    if isinstance(user_class, EClass):
-                        inst = user_class()
                     if isinstance(user_class, type):
                         inst = user_class.__new__(user_class, 'tmp_name')
                     else:

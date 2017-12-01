@@ -139,6 +139,8 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
                         c.__name__ = c.name
                     if isinstance(c, EObject):
                         c.ePackage = self
+                    if hasattr(c, 'python_class'):
+                        c = c.python_class
                 self.user_classes[c.__name__] = c
 
         if classes:
