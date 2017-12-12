@@ -120,7 +120,7 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
     def __init__(self, file_name=None, classes=None, builtins=None,
                  match_filters=None, auto_init_attributes=True,
                  ignore_case=False, skipws=True, ws=None, autokwd=False,
-                 memoization=False, resource_set=None, packages=None,
+                 memoization=False, resource_set=None, package=None,
                  **kwargs):
         super(TextXMetaModel, self).__init__(**kwargs)
 
@@ -145,12 +145,11 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
 
         if classes:
             register_custom_classes(classes)
-        if packages:
-            for package in packages:
-                classes = package.eClassifiers
-                if isinstance(package.eClassifiers, dict):
-                    classes = package.eClassifiers.values()
-                register_custom_classes(classes)
+        if package:
+            classes = package.eClassifiers
+            if isinstance(package.eClassifiers, dict):
+                classes = package.eClassifiers.values()
+            register_custom_classes(classes)
 
         self.match_filters = match_filters if match_filters else {}
 
@@ -212,16 +211,21 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
         self.root_path = os.path.dirname(file_name) if file_name else None
 
         if is_pyecore_enabled():
-            # Get main namespace
-            namespace = self._namespace_for_file_name(file_name)
-            default_name = 'default'
-            if not self.nsURI:
-                self.nsURI = ('http://{}/'.format(namespace) if namespace
-                              else default_name)
-            if not self.nsPrefix:
-                self.nsPrefix = namespace if namespace else default_name
-            if not self.name:
-                self.name = namespace if namespace else default_name
+            if package:
+                self.name = package.name
+                self.nsURI = package.nsURI
+                self.nsPrefix = package.nsPrefix
+            else:
+                # Get main namespace
+                namespace = self._namespace_for_file_name(file_name)
+                default_name = 'default'
+                if not self.nsURI:
+                    self.nsURI = ('http://{}/'.format(namespace) if namespace
+                                  else default_name)
+                if not self.nsPrefix:
+                    self.nsPrefix = namespace if namespace else default_name
+                if not self.name:
+                    self.name = namespace if namespace else default_name
             resource = self.resource_set.create_resource(self.nsURI)
             resource.append(self)
 

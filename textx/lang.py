@@ -384,7 +384,11 @@ class TextXVisitor(PTNodeVisitor):
                                             tx_class = (r._tx_class.eClass
                                                         if is_type
                                                         else r._tx_class)
-                                            tx_class.eSuperTypes.append(cls)
+                                            is_type = isinstance(cls, type)
+                                            ecls = (cls.eClass
+                                                    if is_type
+                                                    else cls)
+                                            tx_class.eSuperTypes.append(ecls)
                             else:
                                 _add_reffered_classes(r, inh_by)
                     _add_reffered_classes(rule, cls._tx_inh_by)
