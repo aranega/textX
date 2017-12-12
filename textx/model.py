@@ -347,6 +347,9 @@ def parse_tree_to_objgraph(parser, parse_tree):
                         attrs['parent'] = obj_attrs._txa_parent
                         del obj_attrs._txa_parent
                     if is_pyecore_enabled():
+                        init_fun = obj_attrs.__class__.__init__
+                        if 'parent' not in init_fun.__code__.co_varnames:
+                            attrs.pop('parent', None)
                         for a in obj_attrs.__class__._tx_attrs:
                             attrs[a] = getattr(obj_attrs, a)
                             # delattr(obj_attrs, a.name)
