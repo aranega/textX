@@ -102,6 +102,13 @@ Docs and tutorials
 
 The full documentation with tutorials is available at http://igordejanovic.net/textX/
 
+
+Discussion and help
+===================
+
+For general discussion and help please join [the textX google
+group](https://groups.google.com/forum/#!forum/textx-talk).
+
 Python EMF support
 ==================
 
@@ -155,3 +162,5 @@ Tested for 2.7, 3.3+
 .. |docs| image:: https://img.shields.io/badge/docs-latest-green.svg
    :target: http://igordejanovic.net/textX/
    :alt: Documentation Status
+
+
