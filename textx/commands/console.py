@@ -79,6 +79,7 @@ def textx():
             print("To convert to png run 'dot -Tpng -O %s.dot'" % args.model)
             model_export(model, "%s.dot" % args.model)
     elif args.cmd == "generate":
+        from os.path import join
         dest = args.out_folder
         generator = EcoreGenerator(auto_register_package=True)
         # Iterate on each resources from the metamodel resource set in case
@@ -86,10 +87,14 @@ def textx():
         # other ones).
         for resource in metamodel.resource_set.resources.values():
             package = resource.contents[0]
-            print("Generating '%s' PyEcore package for "
-                  "meta-model in folder '%s'." % (package.name, dest))
+            print("Generating artefacts for '%s' grammar:" % args.metamodel)
+            print("  * '%s' Python/PyEcore package in folder '%s'."
+                  % (package.name, dest))
             generator.generate(package, dest)
-            resource.save(output=URI(dest + '/' + package.name + '.ecore'))
+            ecore_file_name = '%s.ecore' % package.name
+            print("  * '%s' metamodel Ecore file in folder '%s'"
+                  % (ecore_file_name, dest))
+            resource.save(output=URI(join(dest, ecore_file_name)))
 
 
 if __name__ == '__main__':
