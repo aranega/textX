@@ -241,10 +241,11 @@ def parse_tree_to_objgraph(parser, parse_tree):
             else:
                 value = process_match(nt[0])
                 if is_pyecore_enabled():
-                    if nt.rule_name:
-                        cls = metamodel[nt.rule_name]
-                        if type(cls) is EEnum:
-                            value = cls.getEEnumLiteral(value)
+                    # if the cls is an Enumeration, we retrieve the literal
+                    # from the string value
+                    cls = metamodel.get(nt.rule_name)
+                    if type(cls) is EEnum:
+                        value = cls.getEEnumLiteral(value)
                 return value
 
     def __is_collection(col):
