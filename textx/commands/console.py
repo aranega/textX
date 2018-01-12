@@ -88,11 +88,11 @@ def textx():
         for resource in metamodel.resource_set.resources.values():
             package = resource.contents[0]
             print("Generating artefacts for '%s' grammar:" % args.metamodel)
-            print("  * '%s' Python/PyEcore package in folder '%s'."
+            print("  + '%s' Python/PyEcore package in folder '%s'."
                   % (package.name, dest))
             generator.generate(package, dest)
             ecore_file_name = '%s.ecore' % package.name
-            print("  * '%s' metamodel Ecore file in folder '%s'"
+            print("  + '%s' metamodel Ecore file in folder '%s'"
                   % (ecore_file_name, dest))
             resource.save(output=URI(join(dest, ecore_file_name)))
 
