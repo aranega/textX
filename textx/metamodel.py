@@ -93,6 +93,8 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
             boundaries. Default is False.
         memoization(bool): If memoization should be used (a.k.a. packrat
             parsing). Default is False.
+        textx_tools_support(bool): If True, additional properties will be
+            added to model. Default is False.
         debug(bool): Should debug messages be printed.
         builtins(dict): A dict of named object used in linking phase.
             References to named objects not defined in the model will be
@@ -121,7 +123,7 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
                  match_filters=None, auto_init_attributes=True,
                  ignore_case=False, skipws=True, ws=None, autokwd=False,
                  memoization=False, resource_set=None, package=None,
-                 **kwargs):
+                 textx_tools_support=False, **kwargs):
         super(TextXMetaModel, self).__init__(**kwargs)
 
         self.file_name = file_name
@@ -159,6 +161,7 @@ class TextXMetaModel(__BCLASS1, __BCLASS2):
         self.ws = ws
         self.autokwd = autokwd
         self.memoization = memoization
+        self.textx_tools_support = textx_tools_support
 
         # Registered model processors
         self._model_processors = []
